@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --color-unity-blue: #001f2b;
+  --color-unity-orange: #ff6b35;
+  --color-unity-bg: #f8f9fa;
+  --color-unity-text: #1f2937;
+  --background-image-hero-pattern: linear-gradient(rgba(0, 31, 43, 0.7), rgba(0, 31, 43, 0.5));
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}
+
+body {
+  background-color: #ffffff;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #001f2b;
+  border-radius: 4px;
+}
