@@ -1,9 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function getSmtpTransporter() {
   const host = process.env.SMTP_HOST;
@@ -38,34 +35,24 @@ export async function POST(request: NextRequest) {
     create: { email, code, expires },
   });
 
-  if (resend) {
+  const transporter = getSmtpTransporter();
+  if (transporter) {
     try {
-      await resend.emails.send({
-        from: 'Unity Awards <noreply@unitysummit.no>',
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
         to: email,
         subject: 'Din engangskode – Unity Awards 2026',
         html: otpEmailHtml(code),
       });
     } catch (err) {
-      console.error('[Resend] Failed to send OTP email:', err);
+      console.error('[SMTP] Failed to send OTP email:', err);
     }
   } else {
-    const transporter = getSmtpTransporter();
-    if (transporter) {
-      try {
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
-          to: email,
-          subject: 'Din engangskode – Unity Awards 2026',
-          html: otpEmailHtml(code),
-        });
-      } catch (err) {
-        console.error('[SMTP] Failed to send OTP email:', err);
-      }
-    } else {
-      console.log(`[OTP] No email provider configured — code for ${email}: ${code}`);
-    }
+    console.log(`[OTP] No email provider configured — code for ${email}: ${code}`);
   }
+
+  return Response.json({ message: 'OTP sendt' });
+}
 
   return Response.json({ message: 'OTP sendt' });
 }
