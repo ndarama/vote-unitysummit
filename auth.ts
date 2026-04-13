@@ -15,7 +15,7 @@ declare module 'next-auth' {
   }
 }
 
-const nextAuth = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
   pages: {
     signIn: '/',
@@ -78,10 +78,3 @@ const nextAuth = NextAuth({
     }),
   ],
 });
-
-export const handlers = nextAuth.handlers;
-export const signIn = nextAuth.signIn;
-export const signOut = nextAuth.signOut;
-export const auth = nextAuth.auth;
-export const GET = nextAuth.handlers.GET;
-export const POST = nextAuth.handlers.POST;
