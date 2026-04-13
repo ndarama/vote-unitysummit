@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -65,9 +66,11 @@ const Navbar: React.FC = () => {
           onClick={(e) => handleNavClick(e, '/')}
           className="block relative z-[101] group"
         >
-          <img
+          <Image
             src="https://res.cloudinary.com/dulzeafbm/image/upload/v1771503897/Unity_Summit_Logo-02_hdljmo.png"
             alt="Unity Summit"
+            width={240}
+            height={64}
             className="h-10 md:h-12 lg:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105 brightness-0 invert"
           />
         </Link>

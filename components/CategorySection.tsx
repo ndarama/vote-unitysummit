@@ -19,7 +19,10 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 }) => {
   return (
     <div className="border-b border-gray-100 last:border-0 pb-12 last:pb-0">
-      {/* ... existing code ... */}
+      <h2 className="text-3xl font-serif font-bold text-unity-blue mb-2">{category.title}</h2>
+      {category.description && (
+        <p className="text-gray-500 mb-8">{category.description}</p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {nominees.length === 0 ? (

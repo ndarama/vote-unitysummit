@@ -210,7 +210,32 @@
       "role": "admin"
     }
   ],
-  "voters": [],
+  "voters": [
+    {
+      "email": "ndaramart+test@gmail.com",
+      "name": "Mark Test",
+      "id": "6090e03d-7517-499c-8937-1c26c32a0d0a",
+      "invitedAt": 1775817276033
+    },
+    {
+      "email": "ndaramart+test20@gmail.com",
+      "name": "Mark test 2",
+      "id": "8315b307-f3dc-4aca-a779-bee5af20b4c5",
+      "invitedAt": 1776024015286
+    },
+    {
+      "email": "ndaramart+test60@gmail.com",
+      "name": "Mark test1",
+      "id": "4b2de2f8-9405-461a-bf4a-9444f6d6c5bc",
+      "invitedAt": 1776024862094
+    },
+    {
+      "email": "ndaramart+test70@gmail.com",
+      "name": "Mark Test70",
+      "id": "9cb535aa-bd24-45cb-b6a4-500b2debcdcf",
+      "invitedAt": 1776025771629
+    }
+  ],
   "otps": {
     "ndaramart@gmail.com": {
       "code": "933015",

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Category, Nominee } from '../types';
@@ -27,7 +28,6 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
     fetch('/api/categories')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -50,13 +50,23 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
 
     fetch('/api/user/votes')
       .then((res) => res.json())
-      .then((data) => setUserVotes(data))
-      .catch((err) => console.error('Error fetching votes:', err));
+      .then((data) => {
+        // Ensure userVotes is always an array
+        if (Array.isArray(data)) {
+          setUserVotes(data);
+        } else {
+          setUserVotes([]);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching votes:', err);
+        setUserVotes([]);
+      });
   }, []);
 
   const handleVoteClick = (nominee: Nominee, mode: 'stats' | 'vote' = 'vote') => {
     if (mode === 'vote') {
-      const hasVoted = userVotes.some((v) => v.categoryId === nominee.categoryId);
+      const hasVoted = Array.isArray(userVotes) && userVotes.some((v) => v.categoryId === nominee.categoryId);
       if (hasVoted) {
         alert('Du har allerede stemt i denne kategorien.');
         return;
@@ -69,7 +79,6 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
   const handleVoteSuccess = (nomineeId: string, categoryId: string) => {
     setUserVotes([...userVotes, { categoryId, nomineeId }]);
     setSelectedNominee(null);
-    alert('Takk! Din stemme er registrert.');
   };
 
   if (isAdmin) {
@@ -86,10 +95,11 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
       {/* Hero / Header */}
       <div className="relative text-white py-24 px-4 text-center overflow-hidden">
         <div className="absolute inset-0">
-          <img
+          <Image
             src="https://ik.imgkit.net/3vlqs5axxjf/external/http://images.ntmllc.com/v4/conv-center/580/5802628/5802628_EXT_Grieghallen-Bergen_Z12AE2.jpg?tr=w-1200%2Cfo-auto"
             alt="Background"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-unity-blue/85"></div>
         </div>
@@ -129,7 +139,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                       category={category}
                       nominees={nominees.filter((n) => n.categoryId === category.id)}
                       onSelect={handleVoteClick}
-                      userVote={userVotes.find((v) => v.categoryId === category.id)?.nomineeId}
+                      userVote={Array.isArray(userVotes) ? userVotes.find((v) => v.categoryId === category.id)?.nomineeId : undefined}
                     />
                   ))}
                 </div>
@@ -141,7 +151,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                   </h2>
                   <div className="grid md:grid-cols-2 gap-6">
                     {categories.map((category) => {
-                      const hasVoted = userVotes.some((v) => v.categoryId === category.id);
+                      const hasVoted = Array.isArray(userVotes) && userVotes.some((v) => v.categoryId === category.id);
                       const categoryNominees = nominees.filter((n) => n.categoryId === category.id);
 
                       return (
@@ -155,10 +165,12 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                           }`}
                         >
                           <div className="h-48 overflow-hidden relative">
-                            <img
+                            <Image
                               src={category.imageUrl}
                               alt={category.title}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              fill
+                              unoptimized
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
                               style={category.imageFocalPoint ? { objectPosition: category.imageFocalPoint } : undefined}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>

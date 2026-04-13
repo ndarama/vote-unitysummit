@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Nominee } from '../types';
-import { X, Mail, Lock, CheckCircle, Share2 } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+import { X, CheckCircle, Share2, Mail } from 'lucide-react';
 
 interface VoteModalProps {
   nominee: Nominee;
@@ -12,16 +12,39 @@ interface VoteModalProps {
   mode: 'stats' | 'vote' | 'preview';
 }
 
+interface NomineeStats {
+  votes: number;
+  totalVotes: number;
+  percentage: number;
+  rank: number;
+  totalNominees: number;
+}
+
 const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode }) => {
-  const [step, setStep] = useState<'email' | 'otp'>('email');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
+  const [acknowledged, setAcknowledged] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [stats, setStats] = useState<NomineeStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
-  // Mock stats (random for demo)
-  const votePercentage = Math.floor(Math.random() * 40) + 10; // 10-50%
-  const rank = Math.floor(Math.random() * 3) + 1; // 1-3
+  // Fetch real stats when modal opens in stats/preview mode
+  useEffect(() => {
+    if (mode === 'stats' || mode === 'preview') {
+      setLoadingStats(true);
+      fetch(`/api/nominees/${nominee.id}/stats`)
+        .then((res) => res.json())
+        .then((data) => {
+          setStats(data);
+          setLoadingStats(false);
+        })
+        .catch((err) => {
+          console.error('Error fetching stats:', err);
+          setLoadingStats(false);
+        });
+    }
+  }, [mode, nominee.id]);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -41,63 +64,41 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
     }
   };
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleSubmitVote = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!acknowledged) {
+      setError('Vennligst bekreft at du forstår at du kun kan stemme én gang per kategori');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const res = await fetch('/api/auth/otp/request', {
+      const res = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email,
+          categoryId: nominee.categoryId, 
+          nomineeId: nominee.id 
+        }),
       });
+
+      const data = await res.json();
 
       if (res.ok) {
-        setStep('otp');
+        setSuccess(true);
+        // Call onSuccess after a delay to update parent state
+        setTimeout(() => {
+          onSuccess();
+        }, 3000);
       } else {
-        const data = await res.json();
         setError(data.error || 'Noe gikk galt');
       }
-    } catch (err) {
-      setError('Kunne ikke koble til serveren');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyAndVote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      // 1. Verify OTP via Auth.js credentials
-      const result = await signIn('otp', {
-        email,
-        code: otp,
-        redirect: false,
-      });
-
-      if (!result?.ok) {
-        throw new Error('Ugyldig eller utløpt kode');
-      }
-
-      // 2. Cast Vote
-      const voteRes = await fetch('/api/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId: nominee.categoryId, nomineeId: nominee.id }),
-      });
-
-      if (voteRes.ok) {
-        onSuccess();
-      } else {
-        const data = await voteRes.json();
-        throw new Error(data.error || 'Kunne ikke registrere stemme');
-      }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Kunne ikke koble til serveren');
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,6 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
   if (mode === 'vote') {
     return (
       <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-
         <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 md:p-8 relative animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
           <button
             onClick={onClose}
@@ -115,93 +115,94 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
             <X size={24} />
           </button>
 
-          <h3 className="text-2xl font-bold text-unity-blue mb-6 pr-8">
-            Gi din stemme til <span className="text-unity-orange">{nominee.name}</span>
-          </h3>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 text-center">
-              {error}
+          {success ? (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle size={48} className="text-green-600" />
+              </div>
+              <h3 className="text-3xl font-bold text-unity-blue mb-4">
+                Takk for din stemme!
+              </h3>
+              <p className="text-lg text-gray-600 mb-4">
+                Din stemme på <strong className="text-unity-orange">{nominee.name}</strong> er registrert.
+              </p>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+                <p className="text-sm text-green-800">
+                  ✓ Stemme bekreftet og lagret i databasen<br />
+                  📧 Bekreftelse sendt til {email}
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-unity-blue text-white font-bold rounded-xl hover:bg-unity-orange transition-colors shadow-lg"
+              >
+                Lukk
+              </button>
             </div>
-          )}
-
-          {step === 'email' ? (
-            <form onSubmit={handleSendOTP} className="space-y-6">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                  E-post adresse
-                </label>
-                <div className="relative">
-                  <Mail
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={20}
-                  />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:border-unity-orange focus:ring-2 focus:ring-unity-orange/20 outline-none transition-all"
-                    placeholder="din@epost.no"
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Vi sender deg en engangskode for å verifisere stemmen din.
-                </p>
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-unity-blue text-white font-bold rounded-xl hover:bg-unity-orange transition-colors shadow-lg disabled:opacity-50"
-              >
-                {loading ? 'Sender...' : 'Send kode'}
-              </button>
-            </form>
           ) : (
-            <form onSubmit={handleVerifyAndVote} className="space-y-6">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                  Engangskode
-                </label>
-                <div className="relative">
-                  <Lock
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={20}
-                  />
-                  <input
-                    type="text"
-                    required
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:border-unity-orange focus:ring-2 focus:ring-unity-orange/20 outline-none transition-all tracking-widest text-lg"
-                    placeholder="123456"
-                  />
+            <>
+              <h3 className="text-2xl font-bold text-unity-blue mb-6 pr-8">
+                Gi din stemme til <span className="text-unity-orange">{nominee.name}</span>
+              </h3>
+
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 text-center">
+                  {error}
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Sjekk innboksen til {email}.
-                </p>
+              )}
+
+          <form onSubmit={handleSubmitVote} className="space-y-6">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                E-post adresse
+              </label>
+              <div className="relative">
+                <Mail
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:border-unity-orange focus:ring-2 focus:ring-unity-orange/20 outline-none transition-all"
+                  placeholder="din@epost.no"
+                />
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-unity-blue text-white font-bold rounded-xl hover:bg-unity-orange transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  'Bekrefter...'
-                ) : (
-                  <>
-                    Bekreft og stem <CheckCircle size={20} />
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep('email')}
-                className="w-full py-2 text-gray-500 text-sm hover:text-unity-blue"
-              >
-                Endre e-post
-              </button>
-            </form>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="acknowledge"
+                  checked={acknowledged}
+                  onChange={(e) => setAcknowledged(e.target.checked)}
+                  className="mt-1 w-5 h-5 text-unity-blue border-gray-300 rounded focus:ring-unity-orange focus:ring-2"
+                />
+                <label htmlFor="acknowledge" className="text-sm text-gray-700 cursor-pointer">
+                  Jeg forstår at jeg kun kan avgi <strong>én stemme per kategori</strong>. 
+                  Min stemme vil bli registrert i databasen umiddelbart.
+                </label>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !acknowledged}
+              className="w-full py-3 bg-unity-blue text-white font-bold rounded-xl hover:bg-unity-orange transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                'Sender stemme...'
+              ) : (
+                <>
+                  Send stemme <CheckCircle size={20} />
+                </>
+              )}
+            </button>
+          </form>
+            </>
           )}
         </div>
       </div>
@@ -228,7 +229,7 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
 
         {/* Nominee Details Side (Image) */}
         <div className="w-full md:w-1/3 h-48 sm:h-64 md:h-full relative bg-gray-100 shrink-0">
-          <img src={nominee.imageUrl} alt={nominee.name} className="w-full h-full object-cover" />
+          <Image src={nominee.imageUrl} alt={nominee.name} fill unoptimized className="object-cover" />
         </div>
 
         {/* Content & Vote Side */}
@@ -251,20 +252,27 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
             {mode !== 'preview' && (
               <div>
                 <h4 className="text-sm font-bold text-unity-blue mb-2">Stemmeresultater</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-gray-50 p-2 rounded-lg text-center">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                      Andel stemmer
-                    </p>
-                    <p className="text-lg font-bold text-unity-blue">{votePercentage}%</p>
+                {loadingStats ? (
+                  <div className="text-center py-4 text-gray-400 text-sm">Laster statistikk...</div>
+                ) : stats ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-gray-50 p-2 rounded-lg text-center">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                        Andel stemmer
+                      </p>
+                      <p className="text-lg font-bold text-unity-blue">{stats.percentage}%</p>
+                      <p className="text-[9px] text-gray-400 mt-1">{stats.votes}/{stats.totalVotes}</p>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded-lg text-center">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                        Rangering
+                      </p>
+                      <p className="text-lg font-bold text-unity-orange">#{stats.rank}</p>
+                    </div>
                   </div>
-                  <div className="bg-gray-50 p-2 rounded-lg text-center">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                      Rangering
-                    </p>
-                    <p className="text-lg font-bold text-unity-orange">#{rank}</p>
-                  </div>
-                </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-400 text-sm">Ingen data tilgjengelig</div>
+                )}
               </div>
             )}
           </div>

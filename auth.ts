@@ -3,7 +3,6 @@ import Credentials from 'next-auth/providers/credentials';
 import { db } from '@/server/db';
 import { prisma } from '@/lib/prisma';
 import type { DefaultSession } from 'next-auth';
-import { authConfig } from './auth.config';
 
 declare module 'next-auth' {
   interface Session {
@@ -16,8 +15,25 @@ declare module 'next-auth' {
   }
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  ...authConfig,
+const nextAuth = NextAuth({
+  secret: process.env.AUTH_SECRET,
+  pages: {
+    signIn: '/',
+  },
+  callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        (session.user as any).role = token.role;
+      }
+      return session;
+    },
+  },
   providers: [
     Credentials({
       id: 'otp',
@@ -62,3 +78,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
 });
+
+export const handlers = nextAuth.handlers;
+export const signIn = nextAuth.signIn;
+export const signOut = nextAuth.signOut;
+export const auth = nextAuth.auth;
+export const GET = nextAuth.handlers.GET;
+export const POST = nextAuth.handlers.POST;

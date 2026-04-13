@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Nominee } from '../types';
 import { Check } from 'lucide-react';
 
@@ -23,10 +24,12 @@ const NomineeCard: React.FC<NomineeCardProps> = ({
       className={`bg-white rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col cursor-pointer ${isVoted ? 'border-unity-orange ring-2 ring-unity-orange shadow-lg' : 'border-gray-100 hover:shadow-md'} ${hasVotedInCategory && !isVoted ? 'opacity-70' : ''}`}
     >
       <div className="aspect-[3/4] overflow-hidden relative">
-        <img
+        <Image
           src={nominee.imageUrl}
           alt={nominee.name}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          fill
+          unoptimized
+          className="object-cover transition-transform duration-500 hover:scale-105"
           style={nominee.imageFocalPoint ? { objectPosition: nominee.imageFocalPoint } : undefined}
         />
         {isVoted && (

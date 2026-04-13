@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { Category, Nominee, User, Vote, Voter } from '../types';
@@ -23,16 +24,18 @@ import {
   Download,
   UserMinus,
   RotateCcw,
+  FileBarChart,
 } from 'lucide-react';
 import VoteModal from './VoteModal';
 import ConfirmDialog from './ConfirmDialog';
+import CategoryReports from './CategoryReports';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [role, setRole] = useState<'admin' | 'manager' | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'voters' | 'integrity'
+    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'voters' | 'integrity' | 'reports'
   >('stats');
 
   const [stats, setStats] = useState<any>(null);
@@ -81,6 +84,7 @@ const AdminDashboard: React.FC = () => {
       .then((data) => setRole(data.role));
 
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Poll for monitor data when active
@@ -90,10 +94,15 @@ const AdminDashboard: React.FC = () => {
     const interval = setInterval(() => {
       fetch('/api/admin/stats')
         .then((res) => res.json())
-        .then(setStats);
+        .then(setStats)
+        .catch(err => console.error('Error fetching stats:', err));
       fetch('/api/admin/votes/recent?limit=20')
         .then((res) => res.json())
-        .then(setRecentVotes);
+        .then((data) => setRecentVotes(Array.isArray(data) ? data : []))
+        .catch(err => {
+          console.error('Error fetching recent votes:', err);
+          setRecentVotes([]);
+        });
     }, 3000);
 
     return () => clearInterval(interval);
@@ -102,47 +111,77 @@ const AdminDashboard: React.FC = () => {
   const fetchData = () => {
     fetch('/api/admin/stats')
       .then((res) => res.json())
-      .then(setStats);
+      .then(setStats)
+      .catch(err => console.error('Error fetching stats:', err));
     fetch('/api/categories')
       .then((res) => res.json())
       .then((data) => {
-        setCategories(data.categories);
+        setCategories(data.categories || []);
+      })
+      .catch(err => {
+        console.error('Error fetching categories:', err);
+        setCategories([]);
       });
     fetch('/api/admin/nominees/list')
       .then((res) => res.json())
-      .then(setNominees);
+      .then((data) => setNominees(data || []))
+      .catch(err => {
+        console.error('Error fetching nominees:', err);
+        setNominees([]);
+      });
     // Only fetch users if admin (will be checked on server too, but safe to try)
     fetch('/api/admin/users')
       .then((res) => {
         if (res.ok) return res.json();
         return [];
       })
-      .then(setUsers);
+      .then((data) => setUsers(data || []))
+      .catch(err => {
+        console.error('Error fetching users:', err);
+        setUsers([]);
+      });
 
     fetch('/api/admin/voters')
       .then((res) => {
         if (res.ok) return res.json();
         return [];
       })
-      .then(setVoters);
+      .then((data) => setVoters(data || []))
+      .catch(err => {
+        console.error('Error fetching voters:', err);
+        setVoters([]);
+      });
 
     if (activeTab === 'integrity') {
       fetch('/api/admin/audit-logs')
         .then((res) => res.json())
-        .then(setAuditLogs);
+        .then((data) => setAuditLogs(Array.isArray(data) ? data : []))
+        .catch(err => {
+          console.error('Error fetching audit logs:', err);
+          setAuditLogs([]);
+        });
       fetch('/api/admin/system/config')
         .then((res) => res.json())
-        .then(setSystemConfig);
+        .then(setSystemConfig)
+        .catch(err => console.error('Error fetching system config:', err));
     }
     if (activeTab === 'integrity' || activeTab === 'voters') {
       fetch('/api/admin/votes/all')
         .then((res) => res.json())
-        .then(setAllVotes);
+        .then((data) => setAllVotes(Array.isArray(data) ? data : []))
+        .catch(err => {
+          console.error('Error fetching all votes:', err);
+          setAllVotes([]);
+        });
     }
     if (activeTab === 'monitor') {
       fetch('/api/admin/votes/recent?limit=20')
         .then((res) => res.json())
-        .then(setRecentVotes);
+        .then((data) => setRecentVotes(Array.isArray(data) ? data : []))
+        .catch(err => {
+          console.error('Error fetching recent votes:', err);
+          setRecentVotes([]);
+        });
     }
   };
 
@@ -371,6 +410,12 @@ const AdminDashboard: React.FC = () => {
           >
             <Mail size={20} /> Invitasjoner
           </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'reports' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
+          >
+            <FileBarChart size={20} /> Rapporter
+          </button>
           {role === 'admin' && (
             <>
               <button
@@ -436,7 +481,7 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">
                       Kategorier
                     </p>
-                    <h3 className="text-4xl font-bold text-gray-800">{categories.length}</h3>
+                    <h3 className="text-4xl font-bold text-gray-800">{categories?.length || 0}</h3>
                   </div>
                   <div className="p-3 bg-orange-50 rounded-lg text-unity-orange">
                     <Layers size={24} />
@@ -449,7 +494,7 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">
                       Nominerte
                     </p>
-                    <h3 className="text-4xl font-bold text-gray-800">{nominees.length}</h3>
+                    <h3 className="text-4xl font-bold text-gray-800">{nominees?.length || 0}</h3>
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg text-green-600">
                     <Award size={24} />
@@ -530,7 +575,7 @@ const AdminDashboard: React.FC = () => {
               className={`grid grid-cols-1 ${monitorCategoryFilter === 'all' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-8 mb-8`}
             >
               {filteredCategories.map((category) => {
-                const categoryNominees = nominees
+                const categoryNominees = (nominees || [])
                   .filter((n) => n.categoryId === category.id)
                   .map((n) => ({ ...n, votes: stats ? stats[n.id] || 0 : 0 }))
                   .sort((a, b) => b.votes - a.votes);
@@ -568,9 +613,12 @@ const AdminDashboard: React.FC = () => {
                               >
                                 {index + 1}
                               </span>
-                              <img
+                              <Image
                                 src={nominee.imageUrl}
                                 alt=""
+                                width={32}
+                                height={32}
+                                unoptimized
                                 className="w-8 h-8 rounded-full object-cover bg-gray-200 flex-shrink-0"
                               />
                               <div className="min-w-0 flex-grow">
@@ -612,12 +660,12 @@ const AdminDashboard: React.FC = () => {
                 </h3>
               </div>
               <div className="divide-y overflow-y-auto max-h-80">
-                {recentVotes.length === 0 ? (
+                {!recentVotes || recentVotes.length === 0 ? (
                   <p className="p-6 text-center text-gray-400 text-sm">Ingen stemmer ennå.</p>
                 ) : (
                   recentVotes.map((vote, i) => {
-                    const nom = nominees.find((n) => n.id === vote.nomineeId);
-                    const cat = categories.find((c) => c.id === vote.categoryId);
+                    const nom = nominees?.find((n) => n.id === vote.nomineeId);
+                    const cat = categories?.find((c) => c.id === vote.categoryId);
                     const masked = vote.email.replace(
                       /(.{2})(.*)(@.*)/,
                       (_m, a, b, c) => a + '*'.repeat(Math.min(b.length, 4)) + c
@@ -629,9 +677,12 @@ const AdminDashboard: React.FC = () => {
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {nom?.imageUrl && (
-                            <img
+                            <Image
                               src={nom.imageUrl}
                               alt=""
+                              width={28}
+                              height={28}
+                              unoptimized
                               className="w-7 h-7 rounded-full object-cover bg-gray-200 shrink-0"
                             />
                           )}
@@ -729,12 +780,22 @@ const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {nominees.map((nom) => (
+                  {!nominees || nominees.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-gray-500">
+                        Ingen nominerte funnet.
+                      </td>
+                    </tr>
+                  ) : (
+                    nominees.map((nom) => (
                     <tr key={nom.id} className={`hover:bg-gray-50 ${nom.withdrawn ? 'opacity-60 bg-gray-50' : ''}`}>
                       <td className="p-4 font-medium flex items-center gap-3">
-                        <img
+                        <Image
                           src={nom.imageUrl}
                           alt=""
+                          width={32}
+                          height={32}
+                          unoptimized
                           className="w-8 h-8 rounded-full object-cover bg-gray-200"
                         />
                         {nom.name}
@@ -798,7 +859,8 @@ const AdminDashboard: React.FC = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -828,7 +890,7 @@ const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {voters.length === 0 ? (
+                  {!voters || voters.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-gray-500">
                         Ingen inviterte stemmegivere ennå.
@@ -845,7 +907,7 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td className="p-4 text-center">
                           {(() => {
-                            const count = allVotes.filter(
+                            const count = (allVotes || []).filter(
                               (v) => v.email === voter.email && !v.invalid
                             ).length;
                             return count > 0 ? (
@@ -886,18 +948,27 @@ const AdminDashboard: React.FC = () => {
               </button>
             </div>
             <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
-              <table className="w-full text-left min-w-[600px]">
+              <table className="w-full text-left min-w-[700px]">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="p-4 font-semibold text-gray-600">Brukernavn</th>
+                    <th className="p-4 font-semibold text-gray-600">E-post</th>
                     <th className="p-4 font-semibold text-gray-600">Rolle</th>
                     <th className="p-4 font-semibold text-gray-600 text-right">Handlinger</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {users.map((user) => (
+                  {!users || users.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-gray-500">
+                        Ingen brukere funnet.
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="p-4 font-medium">{user.username}</td>
+                      <td className="p-4 text-gray-500">{user.email || '-'}</td>
                       <td className="p-4">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}
@@ -920,10 +991,17 @@ const AdminDashboard: React.FC = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="max-w-7xl mx-auto">
+            <CategoryReports />
           </div>
         )}
 
@@ -969,7 +1047,7 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {allVotes.filter((v) => v.flagged && !v.invalid).length === 0 ? (
+                    {!allVotes || allVotes.filter((v) => v.flagged && !v.invalid).length === 0 ? (
                       <tr>
                         <td colSpan={5} className="p-8 text-center text-gray-500">
                           Ingen mistenkelige stemmer funnet.
@@ -1028,7 +1106,14 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {auditLogs.map((log) => (
+                    {!auditLogs || auditLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-gray-500">
+                          Ingen revisjonslogger ennå.
+                        </td>
+                      </tr>
+                    ) : (
+                      auditLogs.map((log) => (
                       <tr key={log.id} className="hover:bg-gray-50">
                         <td className="p-4 text-sm text-gray-500">
                           {new Date(log.timestamp).toLocaleString()}
@@ -1051,7 +1136,8 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td className="p-4 text-sm">{log.message}</td>
                       </tr>
-                    ))}
+                    ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1111,10 +1197,12 @@ const AdminDashboard: React.FC = () => {
                         onTouchMove={(e) => { if (isDraggingFocal) handleFocalDrag(e); }}
                         onTouchEnd={() => setIsDraggingFocal(false)}
                       >
-                        <img
-                          src={imagePreview ?? editingItem?.imageUrl}
+                        <Image
+                          src={imagePreview ?? editingItem?.imageUrl ?? ''}
                           alt="Forhåndsvisning"
-                          className="w-full h-full object-cover pointer-events-none"
+                          fill
+                          unoptimized
+                          className="object-cover pointer-events-none"
                           style={{ objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%` }}
                         />
                         <div
@@ -1215,10 +1303,12 @@ const AdminDashboard: React.FC = () => {
                             onTouchMove={(e) => { if (isDraggingFocal) handleFocalDrag(e); }}
                             onTouchEnd={() => setIsDraggingFocal(false)}
                           >
-                            <img
-                              src={imagePreview ?? editingItem?.imageUrl}
+                            <Image
+                              src={imagePreview ?? editingItem?.imageUrl ?? ''}
                               alt="Forhåndsvisning"
-                              className="w-full h-full object-cover pointer-events-none"
+                              fill
+                              unoptimized
+                              className="object-cover pointer-events-none"
                               style={{ objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%` }}
                             />
                             <div
@@ -1235,10 +1325,12 @@ const AdminDashboard: React.FC = () => {
                           <p className="text-xs text-gray-500 mb-1 font-medium">Kortvisning</p>
                           <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
                             <div className="aspect-[3/4] overflow-hidden relative">
-                              <img
-                                src={imagePreview ?? editingItem?.imageUrl}
+                              <Image
+                                src={imagePreview ?? editingItem?.imageUrl ?? ''}
                                 alt=""
-                                className="w-full h-full object-cover"
+                                fill
+                                unoptimized
+                                className="object-cover"
                                 style={{ objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%` }}
                               />
                             </div>
@@ -1288,6 +1380,17 @@ const AdminDashboard: React.FC = () => {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
+                    <input
+                      name="email"
+                      type="email"
+                      defaultValue={editingItem?.email}
+                      required
+                      className="w-full border rounded-lg p-2"
+                      placeholder="bruker@eksempel.no"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Passord</label>
                     <input
                       name="password"
@@ -1309,6 +1412,11 @@ const AdminDashboard: React.FC = () => {
                       <option value="admin">Admin</option>
                     </select>
                   </div>
+                  {!editingItem && (
+                    <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+                      En invitasjon vil bli sendt til denne e-postadressen med påloggingsinformasjon.
+                    </div>
+                  )}
                 </>
               )}
 

@@ -1,9 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Category {
@@ -60,12 +62,6 @@ model Voter {
   invitedAt BigInt
 }
 
-model OTP {
-  email   String @id
-  code    String
-  expires BigInt
-}
-
 model AuditLog {
   id        String @id @default(uuid())
   timestamp BigInt
@@ -78,4 +74,10 @@ model AuditLog {
 model SystemConfig {
   key   String @id
   value Json
+}
+
+model OTP {
+  email   String @id
+  code    String
+  expires BigInt
 }

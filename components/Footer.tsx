@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 const Footer: React.FC = () => {
@@ -13,9 +14,11 @@ const Footer: React.FC = () => {
       <div className="max-w-[90rem] mx-auto px-4 md:px-6 grid md:grid-cols-4 gap-10 md:gap-16">
         <div className="md:col-span-2">
           <Link href="/" onClick={scrollToTop} className="inline-block">
-            <img
+            <Image
               src="https://res.cloudinary.com/dulzeafbm/image/upload/v1771503897/Unity_Summit_Logo-02_hdljmo.png"
               alt="Unity Summit"
+              width={240}
+              height={64}
               className="h-12 md:h-16 w-auto mb-6 md:mb-8 object-contain hover:opacity-90 transition-opacity"
             />
           </Link>
