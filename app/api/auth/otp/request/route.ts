@@ -54,9 +54,6 @@ export async function POST(request: NextRequest) {
   return Response.json({ message: 'OTP sendt' });
 }
 
-  return Response.json({ message: 'OTP sendt' });
-}
-
 function otpEmailHtml(code: string) {
   return `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
