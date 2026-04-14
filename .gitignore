@@ -39,6 +39,9 @@ prisma/migrations/
 public/uploads/*
 !public/uploads/.gitkeep
 
+# Runtime data — never overwrite prod data on git pull
+data.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
