@@ -6,7 +6,7 @@ import { sendVoterInvitationEmail } from '@/services/emailService';
 export async function GET() {
   const role = await requireRole(['admin']);
   if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
-  return Response.json(db.getVoters());
+  return Response.json(await db.getVoters());
 }
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const voter = db.addVoter({ email, name });
+    const voter = await db.addVoter({ email, name });
     console.log(`[API /api/admin/voters POST] Voter invited successfully:`, voter);
     
     // Send real invitation email

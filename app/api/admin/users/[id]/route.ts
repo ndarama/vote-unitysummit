@@ -8,7 +8,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
   const body = await request.json();
-  const updated = db.updateUser(id, body);
+  const updated = await db.updateUser(id, body);
   if (updated) return Response.json(updated);
   return Response.json({ error: 'User not found' }, { status: 404 });
 }
@@ -21,6 +21,6 @@ export async function DELETE(
   if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
-  db.deleteUser(id);
+  await db.deleteUser(id);
   return Response.json({ success: true });
 }

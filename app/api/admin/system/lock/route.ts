@@ -8,6 +8,6 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const { locked } = body;
-  const config = db.togglePollLock(locked);
+  const config = await db.togglePollLock(locked);
   return Response.json(config);
 }

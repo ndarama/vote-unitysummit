@@ -66,7 +66,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const username = credentials?.username as string;
         const password = credentials?.password as string;
         if (!username || !password) return null;
-        const user = db.verifyLogin(username, password);
+        const user = await db.verifyLogin(username, password);
         if (user) {
           return {
             id: username,

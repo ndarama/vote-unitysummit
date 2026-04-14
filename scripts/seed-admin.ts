@@ -14,16 +14,8 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { email },
-    update: {
-      password: hashed,
-      role,
-    },
-    create: {
-      username,
-      email,
-      password: hashed,
-      role,
-    },
+    update: { password: hashed, role },
+    create: { username, email, password: hashed, role },
   });
 
   console.log(`Admin user seeded: ${user.email} (role: ${user.role})`);
@@ -35,3 +27,4 @@ main()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
+

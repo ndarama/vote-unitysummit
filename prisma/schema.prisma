@@ -9,12 +9,13 @@ datasource db {
 }
 
 model Category {
-  id          String    @id @default(uuid())
-  title       String
-  description String
-  imageUrl    String
-  nominees    Nominee[]
-  votes       Vote[]
+  id              String    @id @default(uuid())
+  title           String
+  description     String
+  imageUrl        String
+  imageFocalPoint String?
+  nominees        Nominee[]
+  votes           Vote[]
 }
 
 model Nominee {
@@ -24,6 +25,7 @@ model Nominee {
   title           String
   description     String
   imageUrl        String
+  imageFocalPoint String?
   withdrawn       Boolean  @default(false)
   withdrawalNote  String?
   category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)

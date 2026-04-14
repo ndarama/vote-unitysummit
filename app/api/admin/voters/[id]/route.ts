@@ -10,6 +10,6 @@ export async function DELETE(
   if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
-  db.deleteVoter(id);
+  await db.deleteVoter(id);
   return Response.json({ success: true });
 }

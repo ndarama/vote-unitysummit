@@ -6,7 +6,7 @@ import { sendAdminInvitationEmail } from '@/services/emailService';
 export async function GET() {
   const role = await requireRole(['admin']);
   if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
-  return Response.json(db.getUsers());
+  return Response.json(await db.getUsers());
 }
 
 export async function POST(request: NextRequest) {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const plainPassword = password;
     
     // Create the user
-    const newUser = db.addUser(body);
+    const newUser = await db.addUser(body);
     console.log(`[API /api/admin/users POST] User created successfully:`, newUser.username);
     
     // Send invitation email
