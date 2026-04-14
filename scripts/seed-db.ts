@@ -2,16 +2,8 @@ import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
 
-const connectionString = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error('Missing DATABASE_URL_UNPOOLED or DATABASE_URL in environment');
-  process.exit(1);
-}
-
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
 interface RawCategory {
