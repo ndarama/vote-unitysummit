@@ -9,6 +9,21 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'ik.imgkit.net' },
     ],
   },
+  // Prevent browsers from caching HTML pages so stale server-action IDs
+  // from a previous deployment never cause "Failed to find Server Action" errors.
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
