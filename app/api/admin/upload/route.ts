@@ -4,8 +4,15 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+export const runtime = 'nodejs';
+
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+
+// Production: persistent folder outside .next, served by Nginx at /uploads/
+// Development: falls back to public/uploads (served by Next.js dev server)
+const UPLOAD_DIR =
+  process.env.UPLOAD_DIR ?? path.join(process.cwd(), 'public', 'uploads');
 
 export async function POST(request: NextRequest) {
   const role = await requireRole(['admin', 'manager']);
@@ -26,11 +33,10 @@ export async function POST(request: NextRequest) {
 
   const ext = file.name.split('.').pop()?.replace(/[^a-z0-9]/gi, '') || 'jpg';
   const filename = `${uuidv4()}.${ext}`;
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
-  await mkdir(uploadDir, { recursive: true });
+  await mkdir(UPLOAD_DIR, { recursive: true });
   const bytes = await file.arrayBuffer();
-  await writeFile(path.join(uploadDir, filename), Buffer.from(bytes));
+  await writeFile(path.join(UPLOAD_DIR, filename), Buffer.from(bytes));
 
   return Response.json({ url: `/uploads/${filename}` });
 }
