@@ -191,7 +191,7 @@ function voteConfirmationEmailHtml(nomineeName: string, categoryTitle: string) {
           </p>
 
           <div style="text-align:center;margin:32px 0 0 0">
-            <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}" 
+            <a href="${process.env.AUTH_URL || 'http://localhost:3000'}" 
                style="display:inline-block;background: linear-gradient(135deg, #001f2b 0%, #003d52 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px">
               Tilbake til Stemmeportalen
             </a>
@@ -245,7 +245,7 @@ export async function sendVoteConfirmationEmail(
  * Email template for voter invitation
  */
 function voterInvitationEmailHtml(name: string) {
-  const votingUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const votingUrl = process.env.AUTH_URL || 'http://localhost:3000';
   
   return `
     <!DOCTYPE html>
@@ -342,7 +342,7 @@ export async function sendVoterInvitationEmail(email: string, name: string) {
  * Email template for admin user invitation
  */
 function adminInvitationEmailHtml(name: string, username: string, password: string, role: string) {
-  const loginUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const loginUrl = process.env.AUTH_URL || 'http://localhost:3000';
   const roleText = role === 'admin' ? 'Administrator' : 'Manager';
   
   return `
