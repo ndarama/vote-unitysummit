@@ -17,8 +17,9 @@ declare module 'next-auth' {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
+  trustHost: true,
   pages: {
-    signIn: '/',
+    signIn: '/login',
   },
   callbacks: {
     jwt({ token, user }) {
