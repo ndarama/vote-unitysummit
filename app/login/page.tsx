@@ -78,6 +78,15 @@ export default function LoginPage() {
           >
             {loading ? 'Logger inn…' : 'Logg inn'}
           </button>
+
+          <div className="text-center">
+            <Link
+              href="/forgot-password"
+              className="text-gray-400 text-sm hover:text-gray-600 transition-colors"
+            >
+              Glemt passord?
+            </Link>
+          </div>
         </form>
 
         <div className="mt-6 text-center">

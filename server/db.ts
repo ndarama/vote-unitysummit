@@ -75,6 +75,31 @@ class DB {
     await prisma.user.delete({ where: { id } }).catch(() => null);
   }
 
+  // ── Password Reset ────────────────────────────────────────────────────────
+
+  async createPasswordResetToken(email: string, token: string) {
+    const expires = BigInt(Date.now() + 60 * 60 * 1000); // 1 hour
+    await prisma.passwordResetToken.deleteMany({ where: { email } });
+    return prisma.passwordResetToken.create({ data: { email, token, expires } });
+  }
+
+  async getPasswordResetToken(token: string) {
+    return prisma.passwordResetToken.findUnique({ where: { token } });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const record = await prisma.passwordResetToken.findUnique({ where: { token } });
+    if (!record) return { error: 'invalid_token' };
+    if (record.used) return { error: 'token_used' };
+    if (BigInt(Date.now()) > record.expires) return { error: 'token_expired' };
+    await prisma.user.update({
+      where: { email: record.email },
+      data: { password: bcrypt.hashSync(newPassword, 10) },
+    });
+    await prisma.passwordResetToken.update({ where: { token }, data: { used: true } });
+    return { success: true };
+  }
+
   // ── Voters ────────────────────────────────────────────────────────────────
 
   async getVoters() {

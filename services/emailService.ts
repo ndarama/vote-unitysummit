@@ -455,3 +455,79 @@ export async function sendAdminInvitationEmail(
   const html = adminInvitationEmailHtml(name, username, password, role);
   return await sendEmail(email, subject, html);
 }
+
+/**
+ * Email template for password reset
+ */
+function passwordResetEmailHtml(resetUrl: string) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0;padding:0;background-color:#f5f5f5">
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;background-color:#ffffff">
+
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #001f2b 0%, #003d52 100%);padding:40px 32px;text-align:center">
+          <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700">Unity Awards 2026</h1>
+          <p style="color:#a0d5e8;margin:8px 0 0 0;font-size:14px">Tilbakestill passord</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding:40px 32px">
+          <h2 style="color:#001f2b;margin:0 0 16px 0;font-size:22px;font-weight:600">Tilbakestill passord</h2>
+
+          <p style="color:#333;font-size:16px;line-height:1.6;margin:0 0 24px 0">
+            Vi mottok en forespørsel om å tilbakestille passordet for din admin-konto.
+            Klikk på knappen nedenfor for å velge et nytt passord.
+          </p>
+
+          <div style="text-align:center;margin:32px 0">
+            <a href="${resetUrl}"
+               style="display:inline-block;background: linear-gradient(135deg, #001f2b 0%, #003d52 100%);color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:10px;font-weight:700;font-size:16px">
+              Tilbakestill passord
+            </a>
+          </div>
+
+          <div style="background-color:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;margin:0 0 24px 0">
+            <p style="margin:0;color:#856404;font-size:14px;line-height:1.5">
+              <strong>⏱️ Viktig informasjon:</strong><br>
+              • Lenken er gyldig i 1 time<br>
+              • Lenken kan kun brukes én gang<br>
+              • Del aldri denne lenken med andre
+            </p>
+          </div>
+
+          <p style="color:#666;font-size:14px;line-height:1.6;margin:0">
+            Dersom du ikke har bedt om å tilbakestille passordet ditt, kan du trygt ignorere denne e-posten.
+            Passordet ditt vil ikke endres.
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color:#f8f9fa;padding:24px 32px;border-top:1px solid #e5e7eb">
+          <p style="margin:0;color:#888;font-size:13px;text-align:center">
+            Unity Awards 2026 • Powered by Vote Unity Summit
+          </p>
+          <p style="margin:8px 0 0 0;color:#888;font-size:12px;text-align:center">
+            Denne e-posten ble sendt automatisk. Vennligst ikke svar.
+          </p>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Sends password reset email
+ */
+export async function sendPasswordResetEmail(email: string, resetUrl: string) {
+  const subject = `Tilbakestill passord – Unity Awards 2026`;
+  const html = passwordResetEmailHtml(resetUrl);
+  return await sendEmail(email, subject, html);
+}
