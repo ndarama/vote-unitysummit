@@ -200,12 +200,14 @@
     {
       "id": "1",
       "username": "admin",
+      "email": "admin@unitysummit.no",
       "password": "$2b$10$HiHlemk.2vAW27ZuvbMv3O4K7XwDz0wO.z2ojaQloRFvBIF27ef8.",
       "role": "admin"
     },
     {
       "id": "3",
       "username": "devstack@mountaincre8.com",
+      "email": "devstack@mountaincre8.com",
       "password": "$2b$10$6ncJS7T2bvsjXHpUvrO4i.cXUZAE7BETqpKvqpZLaM8tSVvcnvHvm",
       "role": "admin"
     }

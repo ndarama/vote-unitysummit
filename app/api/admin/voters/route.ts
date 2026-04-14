@@ -4,13 +4,13 @@ import { db } from '@/server/db';
 import { sendVoterInvitationEmail } from '@/services/emailService';
 
 export async function GET() {
-  const role = await requireRole(['admin', 'manager']);
+  const role = await requireRole(['admin']);
   if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
   return Response.json(db.getVoters());
 }
 
 export async function POST(request: NextRequest) {
-  const role = await requireRole(['admin', 'manager']);
+  const role = await requireRole(['admin']);
   if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const body = await request.json();

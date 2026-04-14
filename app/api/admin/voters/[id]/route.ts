@@ -6,7 +6,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const role = await requireRole(['admin', 'manager']);
+  const role = await requireRole(['admin']);
   if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;

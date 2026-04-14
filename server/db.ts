@@ -54,8 +54,8 @@ export interface SystemConfig {
 export interface User {
   id: string;
   username: string;
+  email: string;
   password: string;
-  email?: string;
   role: 'admin' | 'manager';
 }
 
@@ -318,9 +318,9 @@ const initialData: DBData = {
   ],
   votes: [],
   users: [
-    { id: '1', username: 'admin', password: 'admin123', role: 'admin' },
-    { id: '2', username: 'manager', password: 'manager123', role: 'manager' },
-    { id: '3', username: 'devstack@mountaincre8.com', password: 'DemoUser##123', role: 'admin' },
+    { id: '1', username: 'admin', email: 'admin@unitysummit.no', password: 'admin123', role: 'admin' },
+    { id: '2', username: 'manager', email: 'manager@unitysummit.no', password: 'manager123', role: 'manager' },
+    { id: '3', username: 'devstack@mountaincre8.com', email: 'devstack@mountaincre8.com', password: 'DemoUser##123', role: 'admin' },
   ],
   voters: [],
   otps: {},

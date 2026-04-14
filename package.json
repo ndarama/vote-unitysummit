@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "seed:categories": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/seed-categories.ts",
     "seed:db": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/seed-db.ts",
+    "seed:admin": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/seed-admin.ts",
     "studio": "prisma studio --port 5555"
   },
   "dependencies": {
