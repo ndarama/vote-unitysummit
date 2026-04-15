@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -10,23 +10,25 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasAutoSubmitted = useRef(false);
+  const usernameParam = searchParams.get('username') ?? '';
+  const passwordParam = searchParams.get('password') ?? '';
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState(() => usernameParam);
+  const [password, setPassword] = useState(() => passwordParam);
 
   const callbackUrl = searchParams.get('callbackUrl') || '/admin';
 
-  const sanitizeLoginUrl = () => {
+  const sanitizeLoginUrl = useCallback(() => {
     const nextParams = new URLSearchParams();
     if (callbackUrl && callbackUrl !== '/admin') {
       nextParams.set('callbackUrl', callbackUrl);
     }
     const nextUrl = nextParams.toString() ? `/login?${nextParams.toString()}` : '/login';
     router.replace(nextUrl);
-  };
+  }, [callbackUrl, router]);
 
-  const performLogin = async (nextUsername: string, nextPassword: string) => {
+  const performLogin = useCallback(async (nextUsername: string, nextPassword: string) => {
     setError(null);
     setLoading(true);
 
@@ -43,27 +45,29 @@ function LoginForm() {
     } else {
       setError('Feil brukernavn eller passord');
     }
-  };
+  }, [callbackUrl, router]);
 
   useEffect(() => {
-    const usernameParam = searchParams.get('username') ?? '';
-    const passwordParam = searchParams.get('password') ?? '';
-
-    if (usernameParam) {
-      setUsername(usernameParam);
-    }
-    if (passwordParam) {
-      setPassword(passwordParam);
-    }
-
     if (!usernameParam || !passwordParam || hasAutoSubmitted.current) {
       return;
     }
 
     hasAutoSubmitted.current = true;
     sanitizeLoginUrl();
-    void performLogin(usernameParam, passwordParam);
-  }, [searchParams]);
+    void (async () => {
+      const result = await signIn('admin', {
+        username: usernameParam,
+        password: passwordParam,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        router.push(callbackUrl);
+      } else {
+        setError('Feil brukernavn eller passord');
+      }
+    })();
+  }, [callbackUrl, passwordParam, router, sanitizeLoginUrl, usernameParam]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
