@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireRole } from '@/lib/require-role';
 import { prisma } from '@/lib/prisma';
+import { normalizeImageUrl, withNormalizedImageUrl } from '@/lib/image-url';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       orderBy: { name: 'asc' },
     });
 
-    return Response.json(nominees);
+    return Response.json(nominees.map(withNormalizedImageUrl));
   } catch (err) {
     console.error('GET /api/admin/nominees:', err);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
@@ -36,11 +37,11 @@ export async function POST(request: NextRequest) {
     }
 
     const nominee = await prisma.nominee.create({
-      data: { categoryId, name, title, description, imageUrl },
+      data: { categoryId, name, title, description, imageUrl: normalizeImageUrl(imageUrl) },
       include: { category: { select: { id: true, title: true } } },
     });
 
-    return Response.json(nominee, { status: 201 });
+    return Response.json(withNormalizedImageUrl(nominee), { status: 201 });
   } catch (err) {
     console.error('POST /api/admin/nominees:', err);
     return Response.json({ error: 'Internal server error' }, { status: 500 });

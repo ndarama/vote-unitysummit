@@ -1,5 +1,6 @@
 import { requireRole } from '@/lib/require-role';
 import { prisma } from '@/lib/prisma';
+import { withNormalizedImageUrl } from '@/lib/image-url';
 
 // GET /api/admin/nominees/list — returns ALL nominees including withdrawn (admin only)
 export async function GET() {
@@ -11,7 +12,7 @@ export async function GET() {
       include: { category: { select: { id: true, title: true } } },
       orderBy: [{ categoryId: 'asc' }, { name: 'asc' }],
     });
-    return Response.json(nominees);
+    return Response.json(nominees.map(withNormalizedImageUrl));
   } catch (err) {
     console.error('GET /api/admin/nominees/list:', err);
     return Response.json({ error: 'Internal server error' }, { status: 500 });

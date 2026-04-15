@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { normalizeImageUrl } from '@/lib/image-url';
 
 export interface VoteInput {
   email: string;
@@ -576,7 +577,7 @@ export async function getCategoryResults(categoryId: string): Promise<CategoryRe
     id: nominee.id,
     name: nominee.name,
     title: nominee.title,
-    imageUrl: nominee.imageUrl,
+    imageUrl: normalizeImageUrl(nominee.imageUrl),
     votes: voteCounts.get(nominee.id) || 0,
     percentage: totalVotes > 0 ? ((voteCounts.get(nominee.id) || 0) / totalVotes) * 100 : 0,
   })).sort((a, b) => b.votes - a.votes);
@@ -612,7 +613,7 @@ export async function getLeaderboard() {
         id: nominee.id,
         name: nominee.name,
         title: nominee.title,
-        imageUrl: nominee.imageUrl,
+        imageUrl: normalizeImageUrl(nominee.imageUrl),
         categoryId: category.id,
         categoryTitle: category.title,
         votes: nominee.votes.length,

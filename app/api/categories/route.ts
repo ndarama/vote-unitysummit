@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { withNormalizedImageUrl } from '@/lib/image-url';
 
 export async function GET() {
   try {
@@ -9,7 +10,10 @@ export async function GET() {
         orderBy: { name: 'asc' },
       }),
     ]);
-    return Response.json({ categories, nominees });
+    return Response.json({
+      categories: categories.map(withNormalizedImageUrl),
+      nominees: nominees.map(withNormalizedImageUrl),
+    });
   } catch (error) {
     console.error('Error fetching categories and nominees:', error);
     return Response.json({ 

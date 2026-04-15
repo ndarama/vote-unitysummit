@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireRole } from '@/lib/require-role';
 import { prisma } from '@/lib/prisma';
+import { normalizeImageUrl } from '@/lib/image-url';
 
 export async function GET(request: NextRequest) {
   try {
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
           id: nominee.id,
           name: nominee.name,
           title: nominee.title,
-          imageUrl: nominee.imageUrl,
+          imageUrl: normalizeImageUrl(nominee.imageUrl),
           votes: validVotes,
           flaggedVotes: stats.flagged,
           invalidVotes: stats.invalid,
