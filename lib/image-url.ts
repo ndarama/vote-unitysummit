@@ -19,6 +19,10 @@ function extractLocalUploadsPath(value: string): string | null {
   return null;
 }
 
+function isBareFilename(value: string): boolean {
+  return !value.includes('/') && !value.includes('\\');
+}
+
 export function normalizeImageUrl(imageUrl: string | null | undefined): string {
   if (typeof imageUrl !== 'string') {
     return '';
@@ -40,6 +44,10 @@ export function normalizeImageUrl(imageUrl: string | null | undefined): string {
 
   if (trimmed.startsWith('/')) {
     return trimmed.replace(/\\/g, '/');
+  }
+
+  if (isBareFilename(trimmed)) {
+    return `/uploads/${trimmed}`;
   }
 
   return trimmed.replace(/\\/g, '/');
