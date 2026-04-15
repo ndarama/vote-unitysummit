@@ -5,12 +5,20 @@ import type { NextRequest } from 'next/server';
 
 const { auth } = NextAuth(authConfig);
 
+const EMPTY_RSC_PAYLOAD = '0:[null]\n';
+
 // Block requests carrying Next-Action headers. This app has no server actions;
 // all forms use fetch + API routes. These requests come exclusively from bots
 // probing for Next.js server action endpoints.
 function blockServerActionProbes(req: NextRequest): NextResponse | null {
   if (req.headers.has('next-action')) {
-    return new NextResponse(null, { status: 400 });
+    return new NextResponse(EMPTY_RSC_PAYLOAD, {
+      status: 400,
+      headers: {
+        'Cache-Control': 'no-store, must-revalidate',
+        'Content-Type': 'text/x-component; charset=utf-8',
+      },
+    });
   }
   return null;
 }
