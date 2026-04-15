@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Nominee } from '../types';
 import { X, CheckCircle, Share2, Mail } from 'lucide-react';
+import SafeImage from './SafeImage';
 
 interface VoteModalProps {
   nominee: Nominee;
@@ -229,7 +230,7 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
 
         {/* Nominee Details Side (Image) */}
         <div className="w-full md:w-1/3 h-48 sm:h-64 md:h-full relative bg-gray-100 shrink-0">
-          <Image src={nominee.imageUrl} alt={nominee.name} fill unoptimized className="object-cover" />
+          <SafeImage src={nominee.imageUrl} alt={nominee.name} fill unoptimized className="object-cover" />
         </div>
 
         {/* Content & Vote Side */}

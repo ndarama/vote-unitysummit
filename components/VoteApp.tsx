@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Category, Nominee } from '../types';
+import SafeImage from './SafeImage';
 import CategorySection from './CategorySection';
 import VoteModal from './VoteModal';
 import AdminDashboard from './AdminDashboard';
@@ -34,7 +35,6 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
         return res.json();
       })
       .then((data) => {
-        console.log('Fetched data:', data);
         if (!data.categories || !Array.isArray(data.categories)) {
           throw new Error('Invalid data format: categories missing or not an array');
         }
@@ -165,7 +165,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                           }`}
                         >
                           <div className="h-48 overflow-hidden relative">
-                            <Image
+                            <SafeImage
                               src={category.imageUrl}
                               alt={category.title}
                               fill

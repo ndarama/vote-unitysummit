@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Trophy, Medal, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import SafeImage from './SafeImage';
 
 interface LeaderboardNominee {
   id: string;
@@ -141,7 +142,7 @@ const Leaderboard: React.FC = () => {
                         )}
                       </div>
                       <div className="flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden mr-4 border-2 border-white shadow-sm relative">
-                        <Image
+                        <SafeImage
                           src={nominee.imageUrl}
                           alt={nominee.name}
                           fill

@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { Nominee } from '../types';
 import { Check } from 'lucide-react';
+import SafeImage from './SafeImage';
 
 interface NomineeCardProps {
   nominee: Nominee;
@@ -24,7 +24,7 @@ const NomineeCard: React.FC<NomineeCardProps> = ({
       className={`bg-white rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col cursor-pointer ${isVoted ? 'border-unity-orange ring-2 ring-unity-orange shadow-lg' : 'border-gray-100 hover:shadow-md'} ${hasVotedInCategory && !isVoted ? 'opacity-70' : ''}`}
     >
       <div className="aspect-[3/4] overflow-hidden relative">
-        <Image
+        <SafeImage
           src={nominee.imageUrl}
           alt={nominee.name}
           fill
