@@ -5,8 +5,7 @@ import { constants } from 'fs';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const UPLOAD_DIR =
-  process.env.UPLOAD_DIR ?? path.join(process.cwd(), 'public', 'uploads');
+const PUBLIC_UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
 
 function isLocalUpload(imageUrl: string) {
   return typeof imageUrl === 'string' && imageUrl.startsWith('/uploads/');
@@ -40,7 +39,7 @@ async function main() {
 
   for (const category of categories) {
     if (!isLocalUpload(category.imageUrl)) continue;
-    const expectedPath = path.join(UPLOAD_DIR, getUploadFilename(category.imageUrl));
+    const expectedPath = path.join(PUBLIC_UPLOADS_DIR, getUploadFilename(category.imageUrl));
     if (!(await fileExists(expectedPath))) {
       missingCategories.push({
         id: category.id,
@@ -53,7 +52,7 @@ async function main() {
 
   for (const nominee of nominees) {
     if (!isLocalUpload(nominee.imageUrl)) continue;
-    const expectedPath = path.join(UPLOAD_DIR, getUploadFilename(nominee.imageUrl));
+    const expectedPath = path.join(PUBLIC_UPLOADS_DIR, getUploadFilename(nominee.imageUrl));
     if (!(await fileExists(expectedPath))) {
       missingNominees.push({
         id: nominee.id,
@@ -66,7 +65,7 @@ async function main() {
   }
 
   const report = {
-    uploadDir: UPLOAD_DIR,
+    uploadDir: PUBLIC_UPLOADS_DIR,
     totalCategories: categories.length,
     totalNominees: nominees.length,
     missingCategories,

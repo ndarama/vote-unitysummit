@@ -8,8 +8,7 @@ const prisma = new PrismaClient();
 const APPLY = process.argv.includes('--apply');
 const fallbackArg = process.argv.find((arg) => arg.startsWith('--fallback-url='));
 const FALLBACK_URL = fallbackArg?.slice('--fallback-url='.length) || null;
-const UPLOAD_DIR =
-  process.env.UPLOAD_DIR ?? path.join(process.cwd(), 'public', 'uploads');
+const PUBLIC_UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
 
 function isLocalUpload(imageUrl: string) {
   return typeof imageUrl === 'string' && imageUrl.startsWith('/uploads/');
@@ -30,7 +29,7 @@ async function fileExists(filePath: string) {
 
 async function localUploadExists(imageUrl: string) {
   if (!isLocalUpload(imageUrl)) return true;
-  return fileExists(path.join(UPLOAD_DIR, getUploadFilename(imageUrl)));
+  return fileExists(path.join(PUBLIC_UPLOADS_DIR, getUploadFilename(imageUrl)));
 }
 
 async function main() {
@@ -128,7 +127,7 @@ async function main() {
   }
 
   console.log(JSON.stringify({
-    uploadDir: UPLOAD_DIR,
+    uploadDir: PUBLIC_UPLOADS_DIR,
     apply: APPLY,
     fallbackUrl: FALLBACK_URL,
     repairedNominees: nomineeRepairs,
