@@ -3,6 +3,24 @@ import { requireRole } from '@/lib/require-role';
 import { prisma } from '@/lib/prisma';
 import { normalizeImageUrl, withNormalizedImageUrl } from '@/lib/image-url';
 
+function toSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+async function uniqueSlug(base: string): Promise<string> {
+  let slug = base;
+  let i = 1;
+  while (await prisma.category.findUnique({ where: { slug } })) {
+    slug = `${base}-${i++}`;
+  }
+  return slug;
+}
+
 export async function GET() {
   try {
     const role = await requireRole(['admin', 'manager']);
@@ -25,7 +43,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Missing required fields: title, description, imageUrl' }, { status: 400 });
     }
     const category = await prisma.category.create({
-      data: { title, description, imageUrl: normalizeImageUrl(imageUrl) },
+      data: { title, description, imageUrl: normalizeImageUrl(imageUrl), slug: await uniqueSlug(toSlug(title)) },
     });
     return Response.json(withNormalizedImageUrl(category), { status: 201 });
   } catch (err) {

@@ -11,6 +11,7 @@ datasource db {
 model Category {
   id              String    @id @default(uuid())
   title           String
+  slug            String?   @unique
   description     String
   imageUrl        String
   imageFocalPoint String?

@@ -184,7 +184,6 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
                 />
                 <label htmlFor="acknowledge" className="text-sm text-gray-700 cursor-pointer">
                   Jeg forstår at jeg kun kan avgi <strong>én stemme per kategori</strong>. 
-                  Min stemme vil bli registrert i databasen umiddelbart.
                 </label>
               </div>
             </div>

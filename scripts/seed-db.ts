@@ -2,9 +2,19 @@ import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
+import { normalizeImageUrl } from '../lib/image-url';
 
 const prisma = new PrismaClient();
 const DATA_FILE = path.join(process.cwd(), 'data.json');
+
+function toSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
 interface RawCategory {
   id: string;
@@ -45,7 +55,8 @@ async function main() {
         where: { id: existing.id },
         data: {
           description: cat.description,
-          imageUrl: cat.imageUrl,
+          imageUrl: normalizeImageUrl(cat.imageUrl),
+          ...(!existing.slug && { slug: toSlug(cat.title) }),
         },
       });
       categoryIdMap.set(cat.id, existing.id);
@@ -55,7 +66,8 @@ async function main() {
         data: {
           title: cat.title,
           description: cat.description,
-          imageUrl: cat.imageUrl,
+          imageUrl: normalizeImageUrl(cat.imageUrl),
+          slug: toSlug(cat.title),
         },
       });
       categoryIdMap.set(cat.id, created.id);
@@ -88,7 +100,7 @@ async function main() {
         data: {
           title: nom.title,
           description: nom.description,
-          imageUrl: nom.imageUrl,
+          imageUrl: normalizeImageUrl(nom.imageUrl),
         },
       });
       nomUpdated++;
@@ -99,7 +111,7 @@ async function main() {
           name: nom.name,
           title: nom.title,
           description: nom.description,
-          imageUrl: nom.imageUrl,
+          imageUrl: normalizeImageUrl(nom.imageUrl),
         },
       });
       nomCreated++;

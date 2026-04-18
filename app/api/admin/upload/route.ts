@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import { requireRole } from '@/lib/require-role';
-import { getPublicUploadPath, PUBLIC_UPLOADS_DIR, PUBLIC_UPLOADS_URL_PREFIX } from '@/lib/upload-path';
+import { PUBLIC_UPLOADS_DIR, PUBLIC_UPLOADS_URL_PREFIX } from '@/lib/upload-path';
 import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 export const runtime = 'nodejs';
@@ -26,12 +27,22 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Filen er for stor. Maks 5 MB.' }, { status: 400 });
   }
 
-  const ext = file.name.split('.').pop()?.replace(/[^a-z0-9]/gi, '') || 'jpg';
-  const filename = `${uuidv4()}.${ext}`;
+  // Sanitize original filename for display; UUID subdirectory ensures uniqueness
+  const nameParts = file.name.split('.');
+  const ext = (nameParts.pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const base = nameParts.join('.')
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    || 'image';
+  const filename = `${base}.${ext}`;
+  const uuid = uuidv4();
 
-  await mkdir(PUBLIC_UPLOADS_DIR, { recursive: true });
+  const subdir = join(PUBLIC_UPLOADS_DIR, uuid);
+  await mkdir(subdir, { recursive: true });
   const bytes = await file.arrayBuffer();
-  await writeFile(getPublicUploadPath(filename), Buffer.from(bytes));
+  await writeFile(join(subdir, filename), Buffer.from(bytes));
 
-  return Response.json({ url: `${PUBLIC_UPLOADS_URL_PREFIX}/${filename}` });
+  return Response.json({ url: `${PUBLIC_UPLOADS_URL_PREFIX}/${uuid}/${filename}` });
 }
