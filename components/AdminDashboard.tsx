@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { Category, Nominee, User, Vote, Voter } from '../types';
+import { Category, Nominee, User, Vote } from '../types';
 import {
   Trash2,
   Edit,
@@ -16,7 +16,6 @@ import {
   LogOut,
   Activity,
   Filter,
-  Mail,
   Eye,
   ShieldAlert,
   Lock,
@@ -35,14 +34,13 @@ const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [role, setRole] = useState<'admin' | 'manager' | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'voters' | 'integrity' | 'reports'
+    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'integrity' | 'reports'
   >('stats');
 
   const [stats, setStats] = useState<any>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [nominees, setNominees] = useState<Nominee[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [voters, setVoters] = useState<Voter[]>([]);
 
   // Integrity State
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -52,7 +50,7 @@ const AdminDashboard: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null); // Item being edited or null for new
-  const [modalType, setModalType] = useState<'category' | 'nominee' | 'user' | 'voter' | null>(
+  const [modalType, setModalType] = useState<'category' | 'nominee' | 'user' | null>(
     null
   );
   const [previewNominee, setPreviewNominee] = useState<Nominee | null>(null);
@@ -141,17 +139,6 @@ const AdminDashboard: React.FC = () => {
         setUsers([]);
       });
 
-    fetch('/api/admin/voters')
-      .then((res) => {
-        if (res.ok) return res.json();
-        return [];
-      })
-      .then((data) => setVoters(data || []))
-      .catch(err => {
-        console.error('Error fetching voters:', err);
-        setVoters([]);
-      });
-
     if (activeTab === 'integrity') {
       fetch('/api/admin/audit-logs')
         .then((res) => res.json())
@@ -165,7 +152,7 @@ const AdminDashboard: React.FC = () => {
         .then(setSystemConfig)
         .catch(err => console.error('Error fetching system config:', err));
     }
-    if (activeTab === 'integrity' || activeTab === 'voters') {
+    if (activeTab === 'integrity') {
       fetch('/api/admin/votes/all')
         .then((res) => res.json())
         .then((data) => setAllVotes(Array.isArray(data) ? data : []))
@@ -215,7 +202,7 @@ const AdminDashboard: React.FC = () => {
     signOut({ callbackUrl: '/' });
   };
 
-  const handleDelete = (type: 'categories' | 'nominees' | 'users' | 'voters', id: string) => {
+  const handleDelete = (type: 'categories' | 'nominees' | 'users', id: string) => {
     showConfirm('Er du sikker på at du vil slette dette elementet?', async () => {
       setConfirmDialog(null);
       const res = await fetch(`/api/admin/${type}/${id}`, { method: 'DELETE' });
@@ -255,7 +242,7 @@ const AdminDashboard: React.FC = () => {
     }
     if (uploadedImageUrl) data.imageUrl = uploadedImageUrl;
 
-    const endpoint = `/api/admin/${modalType === 'category' ? 'categories' : modalType === 'nominee' ? 'nominees' : modalType === 'user' ? 'users' : 'voters'}`;
+    const endpoint = `/api/admin/${modalType === 'category' ? 'categories' : modalType === 'nominee' ? 'nominees' : 'users'}`;
     const method = editingItem ? 'PUT' : 'POST';
     const url = editingItem ? `${endpoint}/${editingItem.id}` : endpoint;
 
@@ -343,7 +330,7 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const openModal = (type: 'category' | 'nominee' | 'user' | 'voter', item: any = null) => {    setModalType(type);
+  const openModal = (type: 'category' | 'nominee' | 'user', item: any = null) => {    setModalType(type);
     setEditingItem(item);
     setImagePreview(null);
     if (item?.imageFocalPoint) {
@@ -403,12 +390,6 @@ const AdminDashboard: React.FC = () => {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'nominees' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
           >
             <Award size={20} /> Nominerte
-          </button>
-          <button
-            onClick={() => setActiveTab('voters')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'voters' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
-          >
-            <Mail size={20} /> Invitasjoner
           </button>
           <button
             onClick={() => setActiveTab('reports')}
@@ -867,75 +848,6 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'voters' && (
-          <div className="max-w-5xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Inviterte Stemmegivere</h2>
-              <button
-                onClick={() => openModal('voter')}
-                className="bg-unity-blue text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-unity-orange transition-colors"
-              >
-                <Plus size={18} /> Inviter Ny
-              </button>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
-              <table className="w-full text-left min-w-[600px]">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="p-4 font-semibold text-gray-600">Navn</th>
-                    <th className="p-4 font-semibold text-gray-600">E-post</th>
-                    <th className="p-4 font-semibold text-gray-600">Invitert</th>
-                    <th className="p-4 font-semibold text-gray-600 text-center">Har stemt</th>
-                    <th className="p-4 font-semibold text-gray-600 text-right">Handlinger</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {!voters || voters.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-gray-500">
-                        Ingen inviterte stemmegivere ennå.
-                      </td>
-                    </tr>
-                  ) : (
-                    voters.map((voter) => (
-                      <tr key={voter.id} className="hover:bg-gray-50">
-                        <td className="p-4 font-medium">{voter.name}</td>
-                        <td className="p-4 text-gray-500">{voter.email}</td>
-                        <td className="p-4 text-gray-500 text-sm">
-                          {new Date(voter.invitedAt).toLocaleDateString()}{' '}
-                          {new Date(voter.invitedAt).toLocaleTimeString()}
-                        </td>
-                        <td className="p-4 text-center">
-                          {(() => {
-                            const count = (allVotes || []).filter(
-                              (v) => v.email === voter.email && !v.invalid
-                            ).length;
-                            return count > 0 ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
-                                &#10003; {count} {count === 1 ? 'kategori' : 'kategorier'}
-                              </span>
-                            ) : (
-                              <span className="text-gray-300 text-xs">—</span>
-                            );
-                          })()}
-                        </td>
-                        <td className="p-4 text-right space-x-2">
-                          <button
-                            onClick={() => handleDelete('voters', voter.id)}
-                            className="text-red-600 hover:text-red-800 p-1"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'users' && role === 'admin' && (
           <div className="max-w-5xl mx-auto">
             <div className="flex justify-between items-center mb-6">
@@ -1156,9 +1068,7 @@ const AdminDashboard: React.FC = () => {
                 ? 'Kategori'
                 : modalType === 'nominee'
                   ? 'Nominert'
-                  : modalType === 'user'
-                    ? 'Bruker'
-                    : 'Invitasjon'}
+                  : 'Bruker'}
             </h3>
             <form onSubmit={handleSave} className="space-y-4">
               {modalType === 'category' && (
@@ -1417,35 +1327,6 @@ const AdminDashboard: React.FC = () => {
                       En invitasjon vil bli sendt til denne e-postadressen med påloggingsinformasjon.
                     </div>
                   )}
-                </>
-              )}
-
-              {modalType === 'voter' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fullt Navn
-                    </label>
-                    <input
-                      name="name"
-                      required
-                      className="w-full border rounded-lg p-2"
-                      placeholder="Ola Nordmann"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
-                    <input
-                      name="email"
-                      type="email"
-                      required
-                      className="w-full border rounded-lg p-2"
-                      placeholder="ola@eksempel.no"
-                    />
-                  </div>
-                  <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
-                    En invitasjon vil bli simulert sendt til denne e-postadressen.
-                  </div>
                 </>
               )}
 

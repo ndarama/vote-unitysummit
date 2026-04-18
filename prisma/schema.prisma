@@ -25,9 +25,9 @@ model Nominee {
   title           String
   description     String
   imageUrl        String
-  imageFocalPoint String?
-  withdrawn       Boolean  @default(false)
   withdrawalNote  String?
+  withdrawn       Boolean  @default(false)
+  imageFocalPoint String?
   category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   votes           Vote[]
 }
@@ -53,9 +53,9 @@ model Vote {
 model User {
   id       String @id @default(uuid())
   username String @unique
-  email    String @unique
   password String
   role     String @default("manager")
+  email    String @unique
 }
 
 model Voter {
@@ -86,9 +86,9 @@ model OTP {
 }
 
 model PasswordResetToken {
-  id      String @id @default(uuid())
+  id      String  @id @default(uuid())
   email   String
-  token   String @unique
+  token   String  @unique
   expires BigInt
   used    Boolean @default(false)
 }

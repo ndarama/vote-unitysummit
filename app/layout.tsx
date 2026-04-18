@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   title: 'Unity Summit 2026',
   description:
     'En møteplass for ledere, HR-ansvarlige, gündere og kommunikasjonsfolk som vil utfordre vanetenkning, bygge broer og skape reell endring i arbeidslivet.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

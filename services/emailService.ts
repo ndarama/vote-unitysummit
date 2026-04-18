@@ -386,14 +386,12 @@ function adminInvitationEmailHtml(name: string, username: string, password: stri
             <ul style="margin:0;padding-left:20px;color:#334155;font-size:14px;line-height:1.8">
               ${role === 'admin' ? `
               <li>Administrere kategorier og nominerte</li>
-              <li>Invitere stemmegivere</li>
               <li>Overvåke stemmegivning i sanntid</li>
               <li>Behandle stemmeintegritet</li>
               <li>Administrere brukere</li>
               <li>Se rapporter og statistikk</li>
               ` : `
               <li>Overvåke stemmegivning</li>
-              <li>Invitere stemmegivere</li>
               <li>Se rapporter og statistikk</li>
               `}
             </ul>
