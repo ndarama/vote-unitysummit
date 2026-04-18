@@ -87,7 +87,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
 
   // Filter categories if a specific one is selected
   const displayedCategories = categoryId
-    ? categories.filter((c) => c.slug === categoryId)
+    ? categories.filter((c) => c.id === categoryId)
     : categories;
 
   return (
@@ -157,7 +157,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                       return (
                         <div
                           key={category.id}
-                          onClick={() => router.push(`/category/${category.slug}`)}
+                          onClick={() => router.push(`/category/${category.id}`)}
                           className={`block rounded-2xl border transition-all duration-300 group hover:shadow-xl overflow-hidden flex flex-col h-full cursor-pointer ${
                             hasVoted
                               ? 'bg-green-50 border-green-200 hover:border-green-300'

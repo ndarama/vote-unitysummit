@@ -3,25 +3,6 @@ import { requireRole } from '@/lib/require-role';
 import { prisma } from '@/lib/prisma';
 import { normalizeImageUrl, withNormalizedImageUrl } from '@/lib/image-url';
 
-function toSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-async function uniqueSlug(base: string, excludeId: string): Promise<string> {
-  let slug = base;
-  let i = 1;
-  while (true) {
-    const existing = await prisma.category.findUnique({ where: { slug } });
-    if (!existing || existing.id === excludeId) return slug;
-    slug = `${base}-${i++}`;
-  }
-}
-
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -51,7 +32,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updated = await prisma.category.update({
       where: { id },
       data: {
-        ...(title !== undefined && { title, slug: await uniqueSlug(toSlug(title), id) }),
+        ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
         ...(imageUrl !== undefined && { imageUrl: normalizeImageUrl(imageUrl) }),
       },

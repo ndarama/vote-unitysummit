@@ -53,13 +53,6 @@ export function normalizeImageUrl(imageUrl: string | null | undefined): string {
   return trimmed.replace(/\\/g, '/');
 }
 
-/** Returns just the filename portion of an imageUrl for display (e.g. "kari-nordmann.jpg"). */
-export function getImageDisplayName(imageUrl: string | null | undefined): string {
-  if (!imageUrl) return '';
-  const normalized = imageUrl.replace(/\\/g, '/').split('?')[0];
-  return normalized.split('/').filter(Boolean).pop() ?? '';
-}
-
 export function withNormalizedImageUrl<T extends { imageUrl: string | null }>(item: T): T {
   return {
     ...item,
