@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 
 const Countdown: React.FC = () => {
+  const [targetDate, setTargetDate] = useState<string | null>(null);
+  const [enabled, setEnabled] = useState(false);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -11,14 +13,27 @@ const Countdown: React.FC = () => {
   });
 
   useEffect(() => {
-    const targetDate = new Date('2026-09-03T00:00:00').getTime();
+    fetch('/api/countdown')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.targetDate) setTargetDate(data.targetDate);
+        if (typeof data?.enabled === 'boolean') setEnabled(data.enabled);
+      })
+      .catch(() => {/* no config available */});
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !targetDate) return;
+
+    const target = new Date(targetDate).getTime();
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
-      const distance = targetDate - now;
+      const distance = target - now;
 
       if (distance < 0) {
         clearInterval(interval);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
 
@@ -31,7 +46,9 @@ const Countdown: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [targetDate, enabled]);
+
+  if (!enabled || !targetDate) return null;
 
   return (
     <div className="flex justify-center gap-4 md:gap-8 mt-8 text-white">

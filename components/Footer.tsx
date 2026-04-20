@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
         <div className="md:col-span-2">
           <Link href="/" onClick={scrollToTop} className="inline-block">
             <Image
-              src="https://res.cloudinary.com/dulzeafbm/image/upload/v1771503897/Unity_Summit_Logo-02_hdljmo.png"
+              src="https://res.cloudinary.com/dulzeafbm/image/upload/v1776696301/Unity_Summit_Logo_wh_e6zitf.png"
               alt="Unity Summit"
               width={240}
               height={64}

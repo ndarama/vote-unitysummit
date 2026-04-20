@@ -151,7 +151,7 @@ const CategoryReports: React.FC = () => {
     
     // Add logo
     try {
-      const logoUrl = 'https://res.cloudinary.com/dulzeafbm/image/upload/v1771503897/Unity_Summit_Logo-02_hdljmo.png';
+      const logoUrl = 'https://res.cloudinary.com/dulzeafbm/image/upload/v1776696301/Unity_Summit_Logo_wh_e6zitf.png';
       const img = new Image();
       img.crossOrigin = 'anonymous';
       

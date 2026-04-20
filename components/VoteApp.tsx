@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Category, Nominee } from '../types';
 import SafeImage from './SafeImage';
 import CategorySection from './CategorySection';
-import VoteModal from './VoteModal';
-import AdminDashboard from './AdminDashboard';
 import { Lock, ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
+
+const VoteModal = dynamic(() => import('./VoteModal'), { ssr: false });
+const AdminDashboard = dynamic(() => import('./AdminDashboard'), { ssr: false });
 import Countdown from './Countdown';
 
 interface VoteAppProps {
@@ -99,6 +101,8 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
             src="https://ik.imgkit.net/3vlqs5axxjf/external/http://images.ntmllc.com/v4/conv-center/580/5802628/5802628_EXT_Grieghallen-Bergen_Z12AE2.jpg?tr=w-1200%2Cfo-auto"
             alt="Background"
             fill
+            priority
+            sizes="100vw"
             className="object-cover"
           />
           <div className="absolute inset-0 bg-unity-blue/85"></div>
@@ -169,7 +173,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                               src={category.imageUrl}
                               alt={category.title}
                               fill
-                              unoptimized
+                              sizes="(max-width: 768px) 100vw, 50vw"
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
                               style={category.imageFocalPoint ? { objectPosition: category.imageFocalPoint } : undefined}
                             />

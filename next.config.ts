@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'ik.imgkit.net' },
+      { protocol: 'https', hostname: '**' },
     ],
   },
   // Prevent browsers from caching HTML pages so stale server-action IDs

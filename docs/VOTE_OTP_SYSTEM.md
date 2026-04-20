@@ -53,7 +53,7 @@ The Vote OTP (One-Time Password) system adds an extra layer of security and veri
 
 **Common Errors:**
 - `Ikke logget inn` (401) - Not authenticated
-- `Mangler kategori eller nominert` (400) - Missing data
+- `Mangler kategori eller semifinalist` (400) - Missing data
 - `Du har allerede stemt i denne kategorien` (409) - Already voted
 - `Avstemningen er stengt` (403) - Poll is locked
 - `Vent 60 sekunder før du ber om en ny kode` (429) - Rate limited

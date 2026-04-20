@@ -72,6 +72,14 @@ export async function DELETE(
     const existing = await prisma.nominee.findUnique({ where: { id } });
     if (!existing) return Response.json({ error: 'Nominee not found' }, { status: 404 });
 
+    const voteCount = await prisma.vote.count({ where: { nomineeId: id } });
+    if (voteCount > 0) {
+      return Response.json(
+        { error: `Cannot delete "${existing.name}" — they have ${voteCount} vote${voteCount === 1 ? '' : 's'}. Withdraw them instead.` },
+        { status: 409 }
+      );
+    }
+
     await prisma.nominee.delete({ where: { id } });
     return Response.json({ success: true });
   } catch (err) {

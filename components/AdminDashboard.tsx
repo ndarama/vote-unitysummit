@@ -25,6 +25,9 @@ import {
   RotateCcw,
   FileBarChart,
   UserCheck,
+  Timer,
+  Save,
+  RefreshCcw,
 } from 'lucide-react';
 import VoteModal from './VoteModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -35,7 +38,7 @@ const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [role, setRole] = useState<'admin' | 'manager' | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'integrity' | 'reports' | 'contacts'
+    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'integrity' | 'reports' | 'contacts' | 'countdown'
   >('stats');
 
   const [stats, setStats] = useState<any>(null);
@@ -51,6 +54,11 @@ const AdminDashboard: React.FC = () => {
 
   // Marketing contacts
   const [contacts, setContacts] = useState<Voter[]>([]);
+
+  // Countdown
+  const [countdown, setCountdown] = useState<{ targetDate: string; enabled: boolean } | null>(null);
+  const [countdownForm, setCountdownForm] = useState<{ targetDate: string; enabled: boolean }>({ targetDate: '2026-09-03T00:00:00', enabled: true });
+  const [countdownSaving, setCountdownSaving] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null); // Item being edited or null for new
@@ -69,6 +77,11 @@ const AdminDashboard: React.FC = () => {
 
   // Confirm dialog state
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
+
+  // Nominees filter state
+  const [nomineeSearch, setNomineeSearch] = useState('');
+  const [nomineeCategoryFilter, setNomineeCategoryFilter] = useState('');
+  const [nomineeStatusFilter, setNomineeStatusFilter] = useState<'all' | 'active' | 'withdrawn'>('all');
 
   const showConfirm = (message: string, onConfirm: () => void) => {
     setConfirmDialog({ message, onConfirm });
@@ -150,6 +163,16 @@ const AdminDashboard: React.FC = () => {
         console.error('Error fetching contacts:', err);
         setContacts([]);
       });
+
+    fetch('/api/admin/countdown')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setCountdown(data);
+          setCountdownForm({ targetDate: data.targetDate, enabled: data.enabled });
+        }
+      })
+      .catch(err => console.error('Error fetching countdown:', err));
 
     if (activeTab === 'integrity') {
       fetch('/api/admin/audit-logs')
@@ -326,7 +349,7 @@ const AdminDashboard: React.FC = () => {
       fetchData();
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err?.error ?? 'Kunne ikke trekke tilbake nominert');
+      alert(err?.error ?? 'Kunne ikke trekke tilbake semifinalist');
     }
   };
 
@@ -337,7 +360,7 @@ const AdminDashboard: React.FC = () => {
       if (res.ok) {
         fetchData();
       } else {
-        alert('Kunne ikke gjenopprette nominert');
+        alert('Kunne ikke gjenopprette semifinalist');
       }
     });
   };
@@ -414,6 +437,12 @@ const AdminDashboard: React.FC = () => {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'contacts' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
           >
             <UserCheck size={20} /> Kontakter
+          </button>
+          <button
+            onClick={() => setActiveTab('countdown')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'countdown' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
+          >
+            <Timer size={20} /> Nedtelling
           </button>
           {role === 'admin' && (
             <>
@@ -764,9 +793,51 @@ const AdminDashboard: React.FC = () => {
                 onClick={() => openModal('nominee')}
                 className="bg-unity-blue text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-unity-orange transition-colors"
               >
-                <Plus size={18} /> Ny Nominert
+                <Plus size={18} /> Ny semifinalist
               </button>
             </div>
+
+            {/* Filter bar */}
+            <div className="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-wrap gap-3 items-center">
+              <div className="relative flex-1 min-w-[180px]">
+                <input
+                  type="text"
+                  placeholder="Søk på navn eller tittel..."
+                  value={nomineeSearch}
+                  onChange={(e) => setNomineeSearch(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm pl-8 focus:outline-none focus:ring-2 focus:ring-unity-blue"
+                />
+                <svg className="absolute left-2.5 top-2.5 text-gray-400 w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              </div>
+              <select
+                value={nomineeCategoryFilter}
+                onChange={(e) => setNomineeCategoryFilter(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-unity-blue min-w-[160px]"
+              >
+                <option value="">Alle kategorier</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.title}</option>
+                ))}
+              </select>
+              <select
+                value={nomineeStatusFilter}
+                onChange={(e) => setNomineeStatusFilter(e.target.value as 'all' | 'active' | 'withdrawn')}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-unity-blue"
+              >
+                <option value="all">Alle statuser</option>
+                <option value="active">Aktiv</option>
+                <option value="withdrawn">Trukket tilbake</option>
+              </select>
+              {(nomineeSearch || nomineeCategoryFilter || nomineeStatusFilter !== 'all') && (
+                <button
+                  onClick={() => { setNomineeSearch(''); setNomineeCategoryFilter(''); setNomineeStatusFilter('all'); }}
+                  className="text-sm text-gray-500 hover:text-red-500 transition-colors whitespace-nowrap"
+                >
+                  Nullstill filter
+                </button>
+              )}
+            </div>
+
             <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
               <table className="w-full text-left min-w-[800px]">
                 <thead className="bg-gray-50 border-b">
@@ -779,14 +850,29 @@ const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {!nominees || nominees.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-gray-500">
-                        Ingen Semifinalister funnet.
-                      </td>
-                    </tr>
-                  ) : (
-                    nominees.map((nom) => (
+                  {(() => {
+                    const filtered = nominees.filter((nom) => {
+                      const q = nomineeSearch.toLowerCase();
+                      const matchesSearch = !q || nom.name.toLowerCase().includes(q) || nom.title.toLowerCase().includes(q);
+                      const matchesCategory = !nomineeCategoryFilter || nom.categoryId === nomineeCategoryFilter;
+                      const matchesStatus =
+                        nomineeStatusFilter === 'all' ||
+                        (nomineeStatusFilter === 'active' && !nom.withdrawn) ||
+                        (nomineeStatusFilter === 'withdrawn' && nom.withdrawn);
+                      return matchesSearch && matchesCategory && matchesStatus;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={5} className="p-8 text-center text-gray-500">
+                            {nominees.length === 0 ? 'Ingen Semifinalister funnet.' : 'Ingen treff på valgt filter.'}
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map((nom) => (
                     <tr key={nom.id} className={`hover:bg-gray-50 ${nom.withdrawn ? 'opacity-60 bg-gray-50' : ''}`}>
                       <td className="p-4 font-medium flex items-center gap-3">
                         <Image
@@ -858,8 +944,8 @@ const AdminDashboard: React.FC = () => {
                         </button>
                       </td>
                     </tr>
-                  ))
-                  )}
+                  ));
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -1007,6 +1093,111 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'countdown' && (
+          <div className="max-w-xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Nedtelling</h2>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+              {/* Current config info */}
+              {countdown ? (
+                <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 space-y-1">
+                  <p><span className="font-medium">Gjeldende måldato:</span> {new Date(countdown.targetDate).toLocaleString('nb-NO')}</p>
+                  <p><span className="font-medium">Status:</span> {countdown.enabled ? <span className="text-green-600 font-medium">Aktiv</span> : <span className="text-red-500 font-medium">Skjult</span>}</p>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-700">
+                  Ingen nedtelling er konfigurert. Sett en måldato nedenfor for å aktivere nedtelling og stemmefristen.
+                </div>
+              )}
+
+              {/* Edit form */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setCountdownSaving(true);
+                  try {
+                    const res = await fetch('/api/admin/countdown', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(countdownForm),
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      setCountdown(data);
+                      setCountdownForm({ targetDate: data.targetDate, enabled: data.enabled });
+                    } else {
+                      const err = await res.json().catch(() => ({}));
+                      alert(err?.error ?? 'Kunne ikke lagre nedtelling');
+                    }
+                  } finally {
+                    setCountdownSaving(false);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Måldato og -tid</label>
+                  <input
+                    type="datetime-local"
+                    value={countdownForm.targetDate.slice(0, 16)}
+                    onChange={(e) =>
+                      setCountdownForm((f) => ({ ...f, targetDate: e.target.value + ':00' }))
+                    }
+                    required
+                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-unity-orange outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    id="countdown-enabled"
+                    type="checkbox"
+                    checked={countdownForm.enabled}
+                    onChange={(e) =>
+                      setCountdownForm((f) => ({ ...f, enabled: e.target.checked }))
+                    }
+                    className="w-4 h-4 accent-unity-orange cursor-pointer"
+                  />
+                  <label htmlFor="countdown-enabled" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Vis nedtelling på forsiden
+                  </label>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={countdownSaving}
+                    className="flex items-center gap-2 bg-unity-blue text-white px-5 py-2 rounded-lg hover:bg-unity-orange transition-colors text-sm font-medium disabled:opacity-60"
+                  >
+                    <Save size={16} /> {countdownSaving ? 'Lagrer...' : 'Lagre'}
+                  </button>
+
+                  {role === 'admin' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!confirm('Slette nedtelling? Nedtellingen vil ikke lenger vises.')) return;
+                        fetch('/api/admin/countdown', { method: 'DELETE' })
+                          .then((res) => {
+                            if (res.ok) {
+                              setCountdown(null);
+                              setCountdownForm({ targetDate: '', enabled: true });
+                            }
+                          });
+                      }}
+                      className="flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                    >
+                      <RefreshCcw size={16} /> Slett
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
           </div>
         )}
@@ -1161,7 +1352,7 @@ const AdminDashboard: React.FC = () => {
               {modalType === 'category'
                 ? 'Kategori'
                 : modalType === 'nominee'
-                  ? 'Nominert'
+                  ? 'semifinalist'
                   : 'Bruker'}
             </h3>
             <form onSubmit={handleSave} className="space-y-4">
@@ -1458,7 +1649,7 @@ const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-              <UserMinus size={20} className="text-orange-500" /> Trekk tilbake nominert
+              <UserMinus size={20} className="text-orange-500" /> Trekk tilbake semifinalist
             </h3>
             <p className="text-gray-500 text-sm mb-4">
               Semifinalister vil ikke lenger vises offentlig. Du kan gjenopprette dem senere.

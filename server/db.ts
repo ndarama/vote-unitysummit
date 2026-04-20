@@ -5,6 +5,11 @@ export interface SystemConfig {
   pollLocked: boolean;
 }
 
+export interface CountdownConfig {
+  targetDate: string;
+  enabled: boolean;
+}
+
 class DB {
   // ── Audit Logs ────────────────────────────────────────────────────────────
 
@@ -40,6 +45,34 @@ class DB {
     });
     await this.logAudit('system', 'high', `Poll ${locked ? 'locked' : 'unlocked'} by admin`);
     return { pollLocked: locked };
+  }
+
+  // ── Countdown Config ──────────────────────────────────────────────────────
+
+  async getCountdown(): Promise<CountdownConfig | null> {
+    const record = await prisma.systemConfig.findUnique({ where: { key: 'countdown' } });
+    if (!record) return null;
+    const val = record.value as any;
+    if (typeof val?.targetDate !== 'string') return null;
+    return {
+      targetDate: val.targetDate,
+      enabled: typeof val?.enabled === 'boolean' ? val.enabled : true,
+    };
+  }
+
+  async updateCountdown(config: CountdownConfig): Promise<CountdownConfig> {
+    await prisma.systemConfig.upsert({
+      where: { key: 'countdown' },
+      update: { value: config as any },
+      create: { key: 'countdown', value: config as any },
+    });
+    await this.logAudit('system', 'medium', `Countdown updated to ${config.targetDate} (enabled: ${config.enabled})`);
+    return config;
+  }
+
+  async deleteCountdown(): Promise<void> {
+    await prisma.systemConfig.deleteMany({ where: { key: 'countdown' } });
+    await this.logAudit('system', 'medium', 'Countdown deleted');
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────

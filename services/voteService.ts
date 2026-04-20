@@ -88,7 +88,7 @@ export async function validateVote(input: VoteInput): Promise<VoteValidationResu
   if (!nominee) {
     return {
       valid: false,
-      error: 'Ugyldig nominert.',
+      error: 'Ugyldig semifinalist.',
     };
   }
 
@@ -207,14 +207,14 @@ export async function calculateAnomalyScore(input: VoteInput): Promise<{
     alerts.push({
       type: 'spike',
       severity: 'high',
-      message: `Unormal stemmebølge oppdaget for nominert ${nomineeId}`,
+      message: `Unormal stemmebølge oppdaget for semifinalist ${nomineeId}`,
       metadata: { nomineeId, count: recentForNominee },
     });
   } else if (recentForNominee > 20) {
     alerts.push({
       type: 'spike',
       severity: 'medium',
-      message: `Stemmebølge oppdaget for nominert ${nomineeId}`,
+      message: `Stemmebølge oppdaget for semifinalist ${nomineeId}`,
       metadata: { nomineeId, count: recentForNominee },
     });
   }

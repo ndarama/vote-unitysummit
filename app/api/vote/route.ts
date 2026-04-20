@@ -1,8 +1,18 @@
 import { NextRequest } from 'next/server';
 import { createVote } from '@/services/voteService';
+import { db } from '@/server/db';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check countdown expiration
+    const countdown = await db.getCountdown();
+    if (countdown?.targetDate) {
+      const target = new Date(countdown.targetDate).getTime();
+      if (Date.now() > target) {
+        return Response.json({ error: 'Stemmegivning er avsluttet' }, { status: 403 });
+      }
+    }
+
     const body = await request.json();
     const { name, email, categoryId, nomineeId } = body;
 
