@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { Category, Nominee, User, Vote } from '../types';
+import { Category, Nominee, User, Vote, Voter } from '../types';
 import {
   Trash2,
   Edit,
@@ -24,6 +24,7 @@ import {
   UserMinus,
   RotateCcw,
   FileBarChart,
+  UserCheck,
 } from 'lucide-react';
 import VoteModal from './VoteModal';
 import ConfirmDialog from './ConfirmDialog';
@@ -34,7 +35,7 @@ const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [role, setRole] = useState<'admin' | 'manager' | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'integrity' | 'reports'
+    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'integrity' | 'reports' | 'contacts'
   >('stats');
 
   const [stats, setStats] = useState<any>(null);
@@ -47,6 +48,9 @@ const AdminDashboard: React.FC = () => {
   const [systemConfig, setSystemConfig] = useState<any>(null);
   const [allVotes, setAllVotes] = useState<Vote[]>([]);
   const [recentVotes, setRecentVotes] = useState<Vote[]>([]);
+
+  // Marketing contacts
+  const [contacts, setContacts] = useState<Voter[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null); // Item being edited or null for new
@@ -137,6 +141,14 @@ const AdminDashboard: React.FC = () => {
       .catch(err => {
         console.error('Error fetching users:', err);
         setUsers([]);
+      });
+
+    fetch('/api/admin/voters')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setContacts(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error('Error fetching contacts:', err);
+        setContacts([]);
       });
 
     if (activeTab === 'integrity') {
@@ -319,7 +331,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleRestore = (id: string) => {
-    showConfirm('Gjenopprett denne nominerte til den offentlige listen?', async () => {
+    showConfirm('Gjenopprett denne Semifinalister til den offentlige listen?', async () => {
       setConfirmDialog(null);
       const res = await fetch(`/api/admin/nominees/${id}/withdraw`, { method: 'DELETE' });
       if (res.ok) {
@@ -389,13 +401,19 @@ const AdminDashboard: React.FC = () => {
             onClick={() => setActiveTab('nominees')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'nominees' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
           >
-            <Award size={20} /> Nominerte
+            <Award size={20} /> Semifinalister
           </button>
           <button
             onClick={() => setActiveTab('reports')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'reports' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
           >
             <FileBarChart size={20} /> Rapporter
+          </button>
+          <button
+            onClick={() => setActiveTab('contacts')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'contacts' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
+          >
+            <UserCheck size={20} /> Kontakter
           </button>
           {role === 'admin' && (
             <>
@@ -434,7 +452,7 @@ const AdminDashboard: React.FC = () => {
               </h2>
               <p className="text-gray-600 text-lg">
                 Her har du full oversikt over Unity Awards 2026. Bruk menyen til venstre for å
-                administrere kategorier, nominerte og se live stemmegivning.
+                administrere kategorier, Semifinalister og se live stemmegivning.
               </p>
             </div>
 
@@ -473,7 +491,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">
-                      Nominerte
+                      Semifinalister
                     </p>
                     <h3 className="text-4xl font-bold text-gray-800">{nominees?.length || 0}</h3>
                   </div>
@@ -741,7 +759,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'nominees' && (
           <div className="max-w-5xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Nominerte</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Semifinalister</h2>
               <button
                 onClick={() => openModal('nominee')}
                 className="bg-unity-blue text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-unity-orange transition-colors"
@@ -764,7 +782,7 @@ const AdminDashboard: React.FC = () => {
                   {!nominees || nominees.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-gray-500">
-                        Ingen nominerte funnet.
+                        Ingen Semifinalister funnet.
                       </td>
                     </tr>
                   ) : (
@@ -914,6 +932,82 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'reports' && (
           <div className="max-w-7xl mx-auto">
             <CategoryReports />
+          </div>
+        )}
+
+        {activeTab === 'contacts' && (
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Kontakter</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Navn og e-poster samlet inn under avstemning &mdash; kun for markedsføring
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  {contacts.length} kontakter
+                </span>
+                <button
+                  onClick={() => {
+                    const rows = [
+                      ['Navn', 'E-post', 'Registrert'],
+                      ...contacts.map((c) => [
+                        c.name,
+                        c.email,
+                        new Date(c.invitedAt).toLocaleDateString('nb-NO'),
+                      ]),
+                    ];
+                    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `unity-kontakter-${new Date().toISOString().slice(0, 10)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-2 bg-unity-blue text-white px-4 py-2 rounded-lg hover:bg-unity-orange transition-colors text-sm font-medium"
+                >
+                  <Download size={16} /> Last ned CSV
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left">
+                  <tr>
+                    <th className="p-4 font-semibold text-gray-600">Navn</th>
+                    <th className="p-4 font-semibold text-gray-600">E-post</th>
+                    <th className="p-4 font-semibold text-gray-600">Registrert</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {contacts.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-gray-400">
+                        Ingen kontakter ennå.
+                      </td>
+                    </tr>
+                  ) : (
+                    contacts.map((c) => (
+                      <tr key={c.id} className="hover:bg-gray-50">
+                        <td className="p-4 font-medium text-gray-800">{c.name}</td>
+                        <td className="p-4 font-mono text-gray-600">{c.email}</td>
+                        <td className="p-4 text-gray-500">
+                          {new Date(c.invitedAt).toLocaleDateString('nb-NO', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -1367,7 +1461,7 @@ const AdminDashboard: React.FC = () => {
               <UserMinus size={20} className="text-orange-500" /> Trekk tilbake nominert
             </h3>
             <p className="text-gray-500 text-sm mb-4">
-              Nominerte vil ikke lenger vises offentlig. Du kan gjenopprette dem senere.
+              Semifinalister vil ikke lenger vises offentlig. Du kan gjenopprette dem senere.
             </p>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Begrunnelse (kreves)

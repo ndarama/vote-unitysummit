@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { normalizeImageUrl } from '@/lib/image-url';
 
 export interface VoteInput {
+  name?: string;
   email: string;
   categoryId: string;
   nomineeId: string;
@@ -94,14 +95,14 @@ export async function validateVote(input: VoteInput): Promise<VoteValidationResu
   if (nominee.withdrawn) {
     return {
       valid: false,
-      error: 'Denne nominerte har trukket seg fra nominasjonen.',
+      error: 'Denne Semifinalister har trukket seg fra nominasjonen.',
     };
   }
 
   if (nominee.categoryId !== categoryId) {
     return {
       valid: false,
-      error: 'Nominerte tilhører ikke denne kategorien.',
+      error: 'Semifinalister tilhører ikke denne kategorien.',
     };
   }
 
@@ -227,7 +228,7 @@ export async function calculateAnomalyScore(input: VoteInput): Promise<{
  * Creates a new vote
  */
 export async function createVote(input: VoteInput) {
-  const { email, categoryId, nomineeId, ip, userAgent } = input;
+  const { name, email, categoryId, nomineeId, ip, userAgent } = input;
 
   // Validate vote
   const validation = await validateVote(input);
@@ -269,6 +270,13 @@ export async function createVote(input: VoteInput) {
       nominee: true,
     },
   });
+
+  // Upsert Voter record for marketing — skip if email already exists
+  prisma.voter.upsert({
+    where: { email },
+    update: {},
+    create: { email, name: name ?? '', invitedAt: BigInt(Date.now()) },
+  }).catch((err) => console.error('[Voter upsert]', err));
 
   return vote;
 }

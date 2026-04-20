@@ -27,7 +27,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {nominees.length === 0 ? (
           <p className="text-gray-500 col-span-full text-center py-10">
-            Ingen nominerte funnet i denne kategorien.
+            Ingen Semifinalister funnet i denne kategorien.
           </p>
         ) : (
           nominees.map((nominee) => (

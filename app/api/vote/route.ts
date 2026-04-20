@@ -1,11 +1,10 @@
 import { NextRequest } from 'next/server';
 import { createVote } from '@/services/voteService';
-import { sendVoteConfirmationEmail } from '@/services/emailService';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, categoryId, nomineeId } = body;
+    const { name, email, categoryId, nomineeId } = body;
 
     if (!email || !categoryId || !nomineeId) {
       return Response.json({ error: 'Mangler data' }, { status: 400 });
@@ -18,21 +17,12 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent') ?? undefined;
 
     const vote = await createVote({
+      name,
       email,
       categoryId,
       nomineeId,
       ip,
       userAgent,
-    });
-
-    // Send confirmation email (don't wait for it, send in background)
-    sendVoteConfirmationEmail(
-      email,
-      vote.nominee.name,
-      vote.category.title
-    ).catch((err) => {
-      console.error('Failed to send confirmation email:', err);
-      // Don't fail the vote if email fails
     });
 
     return Response.json({ 

@@ -176,7 +176,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div className="absolute bottom-4 left-6 text-white">
                               <p className="text-sm font-medium uppercase tracking-wider opacity-90">
-                                {categoryNominees.length} nominerte
+                                {categoryNominees.length} Semifinalister
                               </p>
                             </div>
                           </div>
@@ -198,7 +198,7 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center text-unity-orange font-bold text-sm uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-                                  Se nominerte <ChevronRight size={16} className="ml-1" />
+                                  Se Semifinalister <ChevronRight size={16} className="ml-1" />
                                 </span>
                               )}
                             </div>
