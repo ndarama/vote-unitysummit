@@ -238,9 +238,9 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                         </div>
 
                         <p className="text-gray-300 mb-8 leading-relaxed flex-grow">
-                          Gå ikke glipp av årets mest inspirerende begivenhet. Sikre deg plass på
-                          Unity Summit & Awards 2026 i dag. Opplev feiringen av lederskap og
-                          fellesskap på nært hold.
+                          Gå ikke glipp av årets mest inspirerende arrangement. 
+                          Sikre deg plass på Unity Summit & Awards 2026 i dag, 
+                          og opplev lederskap og fellesskap på nært hold
                         </p>
 
                         <div className="mt-auto">
