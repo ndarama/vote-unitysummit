@@ -24,14 +24,13 @@ interface NomineeStats {
 const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [acknowledged, setAcknowledged] = useState(false);
   const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'form' | 'otp' | 'voted'>('form');
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [step, setStep] = useState<'form' | 'voted'>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stats, setStats] = useState<NomineeStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
-  const otpInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch real stats when modal opens in stats/preview mode
   useEffect(() => {
@@ -68,31 +67,31 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
     }
   };
 
-  const handleRequestOTP = async (e: React.FormEvent) => {
+  const handleVote = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!acknowledged) {
       setError('Vennligst bekreft at du forstår at du kun kan stemme én gang per kategori');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
-      const res = await fetch('/api/auth/otp/request', {
+      const voteRes = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          name,
+          email,
+          categoryId: nominee.categoryId,
+          nomineeId: nominee.id,
+        }),
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setStep('otp');
-        setTimeout(() => otpInputRef.current?.focus(), 100);
+      const voteData = await voteRes.json();
+      if (voteRes.ok) {
+        setStep('voted');
+        setTimeout(() => onSuccess(), 3000);
       } else {
-        setError(data.error || 'Kunne ikke sende kode');
+        setError(voteData.error || 'Noe gikk galt');
       }
     } catch (err: any) {
       setError(err.message || 'Kunne ikke koble til serveren');
@@ -181,63 +180,6 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
                 Lukk
               </button>
             </div>
-          ) : step === 'otp' ? (
-            <>
-              <h3 className="text-2xl font-bold text-unity-blue mb-2 pr-8">
-                Bekreft din stemme
-              </h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Vi sendte en 6-sifret kode til <strong>{email}</strong>. Skriv den inn nedenfor.
-              </p>
-
-              {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 text-center">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleVerifyAndVote} className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                    Engangskode
-                  </label>
-                  <div className="relative">
-                    <KeyRound
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={20}
-                    />
-                    <input
-                      ref={otpInputRef}
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]{6}"
-                      maxLength={6}
-                      required
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-gray-200 focus:border-unity-orange focus:ring-2 focus:ring-unity-orange/20 outline-none transition-all text-center text-2xl font-mono tracking-[0.5em]"
-                      placeholder="000000"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading || otp.length !== 6}
-                  className="w-full py-3 bg-unity-blue text-white font-bold rounded-xl hover:bg-unity-orange transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {loading ? 'Bekrefter...' : <><CheckCircle size={20} /> Bekreft og stem</>}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { setStep('form'); setOtp(''); setError(''); }}
-                  className="w-full py-2 text-sm text-gray-500 hover:text-unity-blue transition-colors"
-                >
-                  ← Tilbake
-                </button>
-              </form>
-            </>
           ) : (
             <>
               <h3 className="text-2xl font-bold text-unity-blue mb-6 pr-8">
@@ -250,7 +192,7 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
                 </div>
               )}
 
-              <form onSubmit={handleRequestOTP} className="space-y-6">
+              <form onSubmit={handleVote} className="space-y-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                     Fullt navn
@@ -311,7 +253,7 @@ const VoteModal: React.FC<VoteModalProps> = ({ nominee, onClose, onSuccess, mode
                   disabled={loading || !acknowledged}
                   className="w-full py-3 bg-unity-blue text-white font-bold rounded-xl hover:bg-unity-orange transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {loading ? 'Sender kode...' : <><Mail size={20} /> Send engangskode</>}
+                  {loading ? 'Sender stemme...' : <><CheckCircle size={20} /> Send stemme</>}
                 </button>
               </form>
             </>
