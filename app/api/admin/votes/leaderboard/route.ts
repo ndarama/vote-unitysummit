@@ -8,7 +8,7 @@ export async function GET() {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const leaderboard = await getLeaderboard();
+    const leaderboard = await getLeaderboard({ includeHidden: true });
     return Response.json(leaderboard);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);

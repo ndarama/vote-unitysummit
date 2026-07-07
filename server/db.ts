@@ -75,6 +75,37 @@ class DB {
     await this.logAudit('system', 'medium', 'Countdown deleted');
   }
 
+  // ── Hidden Categories (public visibility) ─────────────────────────────────
+
+  async getHiddenCategories(): Promise<string[]> {
+    const record = await prisma.systemConfig.findUnique({ where: { key: 'hiddenCategories' } });
+    if (!record) return [];
+    const val = record.value as any;
+    if (!Array.isArray(val)) return [];
+    return val.filter((v: any) => typeof v === 'string');
+  }
+
+  async isCategoryHidden(id: string): Promise<boolean> {
+    const list = await this.getHiddenCategories();
+    return list.includes(id);
+  }
+
+  async setCategoryHidden(id: string, hidden: boolean): Promise<void> {
+    const current = await this.getHiddenCategories();
+    let updated = current.filter(Boolean);
+    if (hidden) {
+      if (!updated.includes(id)) updated.push(id);
+    } else {
+      updated = updated.filter((x) => x !== id);
+    }
+    await prisma.systemConfig.upsert({
+      where: { key: 'hiddenCategories' },
+      update: { value: updated },
+      create: { key: 'hiddenCategories', value: updated },
+    });
+    await this.logAudit('system', 'medium', `Category ${id} ${hidden ? 'hidden' : 'unhidden'} by admin`);
+  }
+
   // ── Users ─────────────────────────────────────────────────────────────────
 
   async verifyLogin(username: string, password: string) {

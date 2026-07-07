@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { normalizeImageUrl } from '@/lib/image-url';
+import { db } from '@/server/db';
 
 export interface VoteInput {
   name?: string;
@@ -601,8 +602,13 @@ export async function getCategoryResults(categoryId: string): Promise<CategoryRe
 /**
  * Gets leaderboard across all categories
  */
-export async function getLeaderboard() {
+export async function getLeaderboard(opts?: { includeHidden?: boolean }) {
+  const includeHidden = opts?.includeHidden === true;
+
+  const hiddenIds = includeHidden ? [] : await db.getHiddenCategories();
+
   const categories = await prisma.category.findMany({
+    where: includeHidden ? undefined : { id: { notIn: hiddenIds } },
     include: {
       nominees: {
         where: { withdrawn: false },

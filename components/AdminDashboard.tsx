@@ -43,6 +43,7 @@ const AdminDashboard: React.FC = () => {
 
   const [stats, setStats] = useState<any>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryHiddenMap, setCategoryHiddenMap] = useState<Record<string, boolean>>({});
   const [nominees, setNominees] = useState<Nominee[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
@@ -128,14 +129,17 @@ const AdminDashboard: React.FC = () => {
       .then((res) => res.json())
       .then(setStats)
       .catch(err => console.error('Error fetching stats:', err));
-    fetch('/api/categories')
+    fetch('/api/admin/categories')
       .then((res) => res.json())
       .then((data) => {
-        setCategories(data.categories || []);
+        const cats = Array.isArray(data) ? data : data.categories || [];
+        setCategories(cats);
+        fetchCategoryVisibilities(cats);
       })
       .catch(err => {
         console.error('Error fetching categories:', err);
         setCategories([]);
+        setCategoryHiddenMap({});
       });
     fetch('/api/admin/nominees/list')
       .then((res) => res.json())
@@ -249,6 +253,68 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
+  const fetchCategoryVisibilities = async (cats?: Category[]) => {
+    const list = cats ?? categories;
+    if (!list || list.length === 0) {
+      setCategoryHiddenMap({});
+      return;
+    }
+    try {
+      const pairs = await Promise.all(
+        list.map(async (c) => {
+          try {
+            const res = await fetch(`/api/admin/categories/${c.id}/visibility`);
+            if (!res.ok) return [c.id, false];
+            const data = await res.json();
+            return [c.id, !!data.hidden];
+          } catch (err) {
+            return [c.id, false];
+          }
+        })
+      );
+      const map: Record<string, boolean> = {};
+      pairs.forEach(([id, hidden]: any) => {
+        map[id] = !!hidden;
+      });
+      setCategoryHiddenMap(map);
+    } catch (err) {
+      setCategoryHiddenMap({});
+    }
+  };
+
+  const toggleCategoryVisibility = async (id: string) => {
+    const current = categoryHiddenMap[id] ?? false;
+    try {
+      const res = await fetch(`/api/admin/categories/${id}/visibility`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hidden: !current }),
+      });
+      if (res.ok) {
+        setCategoryHiddenMap((s) => ({ ...s, [id]: !current }));
+        fetchData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err?.error ?? 'Kunne ikke oppdatere synlighet');
+      }
+    } catch (err) {
+      console.error('toggleCategoryVisibility error', err);
+      alert('Kunne ikke oppdatere synlighet');
+    }
+  };
+
+  const handleToggleVisibility = (id: string) => {
+    const hidden = categoryHiddenMap[id];
+    if (!hidden) {
+      showConfirm('Skjul kategori fra publikum? Dette vil blokkere nye stemmer.', async () => {
+        setConfirmDialog(null);
+        await toggleCategoryVisibility(id);
+      });
+    } else {
+      toggleCategoryVisibility(id);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
@@ -282,20 +348,55 @@ const AdminDashboard: React.FC = () => {
     const url = editingItem ? `${endpoint}/${editingItem.id}` : endpoint;
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      // Detect clone intent: only valid when editing an existing nominee
+      const cloneFlag = formData.get('clone');
+      const isClone = modalType === 'nominee' && editingItem && (cloneFlag === 'true' || cloneFlag === 'on');
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        setEditingItem(null);
-        setImagePreview(null);
-        fetchData();
+      if (isClone && editingItem) {
+        // POST to dedicated clone endpoint
+        const cloneBody: any = {
+          categoryId: data.categoryId,
+        };
+        if (data.name) cloneBody.name = data.name;
+        if (data.title) cloneBody.title = data.title;
+        if (data.description) cloneBody.description = data.description;
+        if (data.imageUrl) cloneBody.imageUrl = data.imageUrl;
+
+        const cloneRes = await fetch(`/api/admin/nominees/${editingItem.id}/clone`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cloneBody),
+        });
+
+        if (cloneRes.ok) {
+          setIsModalOpen(false);
+          setEditingItem(null);
+          setImagePreview(null);
+          fetchData();
+        } else {
+          const err = await cloneRes.json().catch(() => ({}));
+          alert(err?.error ?? 'Kunne ikke klone semifinalist');
+        }
       } else {
-        const err = await res.json().catch(() => ({}));
-        alert(err?.error ?? 'Kunne ikke lagre endringer');
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            Object.fromEntries(
+              Object.entries(data).map(([k, v]) => [k, ['force'].includes(k) ? (v === 'true' || v === 'on') : v])
+            )
+          ),
+        });
+
+        if (res.ok) {
+          setIsModalOpen(false);
+          setEditingItem(null);
+          setImagePreview(null);
+          fetchData();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err?.error ?? 'Kunne ikke lagre endringer');
+        }
       }
     } catch (err) {
       console.error('handleSave error:', err);
@@ -769,6 +870,13 @@ const AdminDashboard: React.FC = () => {
                           className="text-blue-600 hover:text-blue-800 p-1"
                         >
                           <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleToggleVisibility(cat.id)}
+                          className="text-gray-600 hover:text-gray-800 p-1"
+                          title={categoryHiddenMap[cat.id] ? 'Vis kategori offentlig' : 'Skjul kategori fra publikum'}
+                        >
+                          {categoryHiddenMap[cat.id] ? <Unlock size={18} /> : <Lock size={18} />}
                         </button>
                         <button
                           onClick={() => handleDelete('categories', cat.id)}
@@ -1458,6 +1566,34 @@ const AdminDashboard: React.FC = () => {
                       ))}
                     </select>
                   </div>
+                  {editingItem && (
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="checkbox"
+                        id="force-transfer"
+                        name="force"
+                        value="true"
+                        className="w-4 h-4 accent-unity-orange"
+                      />
+                      <label htmlFor="force-transfer" className="text-sm text-gray-700">
+                        Tving overføring selv om målkategorien har stemmer
+                      </label>
+                    </div>
+                  )}
+                  {editingItem && (
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="checkbox"
+                        id="clone-nominee"
+                        name="clone"
+                        value="true"
+                        className="w-4 h-4 accent-unity-orange"
+                      />
+                      <label htmlFor="clone-nominee" className="text-sm text-gray-700">
+                        Lag kopi i målkategori (behold gammel semifinalist og stemmer)
+                      </label>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Tittel / Rolle

@@ -20,6 +20,12 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Mangler data' }, { status: 400 });
     }
 
+    // Disallow voting into hidden categories
+    const hidden = await db.isCategoryHidden(categoryId);
+    if (hidden) {
+      return Response.json({ error: 'Stemmegivning er avsluttet for denne kategorien' }, { status: 403 });
+    }
+
     const ip =
       request.headers.get('x-forwarded-for') ?? 
       request.headers.get('x-real-ip') ?? 

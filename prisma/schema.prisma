@@ -30,6 +30,10 @@ model Nominee {
   imageFocalPoint String?
   category        Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   votes           Vote[]
+  // If this nominee was created as a clone, reference the original nominee here
+  clonedFromId    String?
+  clonedFrom      Nominee?  @relation("NomineeClones", fields: [clonedFromId], references: [id])
+  clones          Nominee[] @relation("NomineeClones")
 }
 
 model Vote {

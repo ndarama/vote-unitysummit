@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireRole } from '@/lib/require-role';
 import { prisma } from '@/lib/prisma';
+import { db } from '@/server/db';
 import { normalizeImageUrl, withNormalizedImageUrl } from '@/lib/image-url';
 
 export async function GET(
@@ -35,10 +36,21 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { categoryId, name, title, description, imageUrl } = body;
+    const { categoryId, name, title, description, imageUrl, force } = body;
 
     const existing = await prisma.nominee.findUnique({ where: { id } });
     if (!existing) return Response.json({ error: 'Nominee not found' }, { status: 404 });
+
+    // If transferring to a different category, ensure target category has no votes unless forced
+    if (categoryId !== undefined && categoryId !== existing.categoryId) {
+      const targetVoteCount = await prisma.vote.count({ where: { categoryId, invalid: false } });
+      if (targetVoteCount > 0 && !force) {
+        return Response.json({ error: 'Mål-kategori har allerede stemmer. Bruk "force": true for å tvinge overføring.' }, { status: 409 });
+      }
+      if (targetVoteCount > 0 && force) {
+        await db.logAudit('manual_action', 'medium', `Forced transfer of nominee ${id} from ${existing.categoryId} to ${categoryId} by admin`);
+      }
+    }
 
     const updated = await prisma.nominee.update({
       where: { id },
