@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireRole } from '@/lib/require-role';
-import { getPublicUploadPath, PUBLIC_UPLOADS_DIR, PUBLIC_UPLOADS_URL_PREFIX } from '@/lib/upload-path';
+import { getPublicUploadPath, getPublicUploadsDir, PUBLIC_UPLOADS_URL_PREFIX } from '@/lib/upload-path';
 import { writeFile, mkdir } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const ext = file.name.split('.').pop()?.replace(/[^a-z0-9]/gi, '') || 'jpg';
   const filename = `${uuidv4()}.${ext}`;
 
-  await mkdir(PUBLIC_UPLOADS_DIR, { recursive: true });
+  await mkdir(getPublicUploadsDir(), { recursive: true });
   const bytes = await file.arrayBuffer();
   await writeFile(getPublicUploadPath(filename), Buffer.from(bytes));
 
