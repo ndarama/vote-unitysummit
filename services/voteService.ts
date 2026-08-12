@@ -58,10 +58,10 @@ export async function validateVote(input: VoteInput): Promise<VoteValidationResu
   const { email, categoryId, nomineeId, ip } = input;
 
   // Check if poll is locked
-  const lockConfig = await prisma.systemConfig.findUnique({ 
-    where: { key: 'pollLocked' } 
+  const lockConfig = await prisma.systemConfig.findUnique({
+    where: { key: 'pollLocked' },
   });
-  
+
   if (lockConfig?.value === true) {
     return {
       valid: false,
@@ -73,7 +73,7 @@ export async function validateVote(input: VoteInput): Promise<VoteValidationResu
   const category = await prisma.category.findUnique({
     where: { id: categoryId },
   });
-  
+
   if (!category) {
     return {
       valid: false,
@@ -81,41 +81,41 @@ export async function validateVote(input: VoteInput): Promise<VoteValidationResu
     };
   }
 
-  // Check if nominee exists and is not withdrawn
+  // Check if deltager exists and is not withdrawn
   const nominee = await prisma.nominee.findUnique({
     where: { id: nomineeId },
   });
-  
+
   if (!nominee) {
     return {
       valid: false,
-      error: 'Ugyldig semifinalist.',
+      error: 'Ugyldig deltager.',
     };
   }
 
   if (nominee.withdrawn) {
     return {
       valid: false,
-      error: 'Denne Semifinalister har trukket seg fra nominasjonen.',
+      error: 'Denne deltageren har trukket seg fra nominasjonen.',
     };
   }
 
   if (nominee.categoryId !== categoryId) {
     return {
       valid: false,
-      error: 'Semifinalister tilhører ikke denne kategorien.',
+      error: 'Deltageren tilhører ikke denne kategorien.',
     };
   }
 
   // Check if already voted in this category
   const existingVote = await prisma.vote.findFirst({
-    where: { 
-      email, 
+    where: {
+      email,
       categoryId,
       invalid: false,
     },
   });
-  
+
   if (existingVote) {
     return {
       valid: false,
@@ -143,10 +143,10 @@ export async function calculateAnomalyScore(input: VoteInput): Promise<{
   }
 
   // Fraud detection: multiple votes from same IP
-  const votesFromIp = await prisma.vote.count({ 
-    where: { ip, invalid: false } 
+  const votesFromIp = await prisma.vote.count({
+    where: { ip, invalid: false },
   });
-  
+
   if (votesFromIp >= 10) {
     anomalyScore += 70;
     alerts.push({
@@ -170,10 +170,10 @@ export async function calculateAnomalyScore(input: VoteInput): Promise<{
     where: { ip, invalid: false },
     orderBy: { timestamp: 'desc' },
   });
-  
+
   if (recentFromIp) {
     const timeDiff = Date.now() - Number(recentFromIp.timestamp);
-    
+
     if (timeDiff < 1000) {
       anomalyScore += 90;
       alerts.push({
@@ -196,26 +196,26 @@ export async function calculateAnomalyScore(input: VoteInput): Promise<{
   // Spike detection for nominee
   const oneMinuteAgo = BigInt(Date.now() - 60_000);
   const recentForNominee = await prisma.vote.count({
-    where: { 
-      nomineeId, 
-      invalid: false, 
-      timestamp: { gt: oneMinuteAgo } 
+    where: {
+      nomineeId,
+      invalid: false,
+      timestamp: { gt: oneMinuteAgo },
     },
   });
-  
+
   if (recentForNominee > 50) {
     anomalyScore += 30;
     alerts.push({
       type: 'spike',
       severity: 'high',
-      message: `Unormal stemmebølge oppdaget for semifinalist ${nomineeId}`,
+      message: `Unormal stemmebølge oppdaget for deltager ${nomineeId}`,
       metadata: { nomineeId, count: recentForNominee },
     });
   } else if (recentForNominee > 20) {
     alerts.push({
       type: 'spike',
       severity: 'medium',
-      message: `Stemmebølge oppdaget for semifinalist ${nomineeId}`,
+      message: `Stemmebølge oppdaget for deltager ${nomineeId}`,
       metadata: { nomineeId, count: recentForNominee },
     });
   }
@@ -273,11 +273,13 @@ export async function createVote(input: VoteInput) {
   });
 
   // Upsert Voter record for marketing — skip if email already exists
-  prisma.voter.upsert({
-    where: { email },
-    update: {},
-    create: { email, name: name ?? '', invitedAt: BigInt(Date.now()) },
-  }).catch((err) => console.error('[Voter upsert]', err));
+  prisma.voter
+    .upsert({
+      where: { email },
+      update: {},
+      create: { email, name: name ?? '', invitedAt: BigInt(Date.now()) },
+    })
+    .catch((err) => console.error('[Voter upsert]', err));
 
   return vote;
 }
@@ -307,7 +309,7 @@ export async function getUserVotes(email: string) {
     orderBy: { timestamp: 'desc' },
   });
 
-  return votes.map(vote => ({
+  return votes.map((vote) => ({
     ...vote,
     timestamp: Number(vote.timestamp),
   }));
@@ -343,7 +345,7 @@ export async function getAllVotes(filters?: {
     orderBy: { timestamp: 'desc' },
   });
 
-  return votes.map(vote => ({
+  return votes.map((vote) => ({
     ...vote,
     timestamp: Number(vote.timestamp),
   }));
@@ -373,7 +375,7 @@ export async function getRecentVotes(limit: number = 50) {
     orderBy: { timestamp: 'desc' },
   });
 
-  return votes.map(vote => ({
+  return votes.map((vote) => ({
     ...vote,
     timestamp: Number(vote.timestamp),
   }));
@@ -517,10 +519,10 @@ export async function getVoteStats(): Promise<VoteStats> {
   const categories = await prisma.category.findMany({
     select: { id: true, title: true },
   });
-  
-  const categoryMap = new Map(categories.map(c => [c.id, c.title]));
-  
-  const enrichedCategoryVotes = votesByCategory.map(v => ({
+
+  const categoryMap = new Map(categories.map((c) => [c.id, c.title]));
+
+  const enrichedCategoryVotes = votesByCategory.map((v) => ({
     categoryId: v.categoryId,
     categoryTitle: categoryMap.get(v.categoryId) || 'Unknown',
     totalVotes: v._count,
@@ -530,18 +532,22 @@ export async function getVoteStats(): Promise<VoteStats> {
   const nominees = await prisma.nominee.findMany({
     select: { id: true, name: true, categoryId: true },
   });
-  
-  const nomineeMap = new Map(nominees.map(n => [n.id, { name: n.name, categoryId: n.categoryId }]));
-  
-  const enrichedNomineeVotes = votesByNominee.map(v => {
-    const nominee = nomineeMap.get(v.nomineeId);
-    return {
-      nomineeId: v.nomineeId,
-      nomineeName: nominee?.name || 'Unknown',
-      categoryId: nominee?.categoryId || '',
-      votes: v._count,
-    };
-  }).sort((a, b) => b.votes - a.votes);
+
+  const nomineeMap = new Map(
+    nominees.map((n) => [n.id, { name: n.name, categoryId: n.categoryId }])
+  );
+
+  const enrichedNomineeVotes = votesByNominee
+    .map((v) => {
+      const nominee = nomineeMap.get(v.nomineeId);
+      return {
+        nomineeId: v.nomineeId,
+        nomineeName: nominee?.name || 'Unknown',
+        categoryId: nominee?.categoryId || '',
+        votes: v._count,
+      };
+    })
+    .sort((a, b) => b.votes - a.votes);
 
   return {
     totalVotes,
@@ -578,18 +584,20 @@ export async function getCategoryResults(categoryId: string): Promise<CategoryRe
 
   // Count votes per nominee
   const voteCounts = new Map<string, number>();
-  category.votes.forEach(vote => {
+  category.votes.forEach((vote) => {
     voteCounts.set(vote.nomineeId, (voteCounts.get(vote.nomineeId) || 0) + 1);
   });
 
-  const nominees = category.nominees.map(nominee => ({
-    id: nominee.id,
-    name: nominee.name,
-    title: nominee.title,
-    imageUrl: normalizeImageUrl(nominee.imageUrl),
-    votes: voteCounts.get(nominee.id) || 0,
-    percentage: totalVotes > 0 ? ((voteCounts.get(nominee.id) || 0) / totalVotes) * 100 : 0,
-  })).sort((a, b) => b.votes - a.votes);
+  const nominees = category.nominees
+    .map((nominee) => ({
+      id: nominee.id,
+      name: nominee.name,
+      title: nominee.title,
+      imageUrl: normalizeImageUrl(nominee.imageUrl),
+      votes: voteCounts.get(nominee.id) || 0,
+      percentage: totalVotes > 0 ? ((voteCounts.get(nominee.id) || 0) / totalVotes) * 100 : 0,
+    }))
+    .sort((a, b) => b.votes - a.votes);
 
   return {
     categoryId: category.id,
@@ -621,9 +629,9 @@ export async function getLeaderboard(opts?: { includeHidden?: boolean }) {
     },
   });
 
-  return categories.map(category => {
+  return categories.map((category) => {
     const nominees = category.nominees
-      .map(nominee => ({
+      .map((nominee) => ({
         id: nominee.id,
         name: nominee.name,
         title: nominee.title,
@@ -647,12 +655,15 @@ export async function getLeaderboard(opts?: { includeHidden?: boolean }) {
 /**
  * Bulk invalidate votes based on criteria
  */
-export async function bulkInvalidateVotes(criteria: {
-  ip?: string;
-  email?: string;
-  nomineeId?: string;
-  minAnomalyScore?: number;
-}, reason: string) {
+export async function bulkInvalidateVotes(
+  criteria: {
+    ip?: string;
+    email?: string;
+    nomineeId?: string;
+    minAnomalyScore?: number;
+  },
+  reason: string
+) {
   const where: any = { invalid: false };
 
   if (criteria.ip) where.ip = criteria.ip;
@@ -689,8 +700,8 @@ export async function bulkInvalidateVotes(criteria: {
  */
 export async function hasVoted(email: string, categoryId: string): Promise<boolean> {
   const vote = await prisma.vote.findFirst({
-    where: { 
-      email, 
+    where: {
+      email,
       categoryId,
       invalid: false,
     },
@@ -704,7 +715,7 @@ export async function hasVoted(email: string, categoryId: string): Promise<boole
  */
 export async function getNomineeVoteCount(nomineeId: string): Promise<number> {
   return await prisma.vote.count({
-    where: { 
+    where: {
       nomineeId,
       invalid: false,
     },

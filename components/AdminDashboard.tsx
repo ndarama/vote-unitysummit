@@ -38,7 +38,15 @@ const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [role, setRole] = useState<'admin' | 'manager' | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'stats' | 'monitor' | 'categories' | 'nominees' | 'users' | 'integrity' | 'reports' | 'contacts' | 'countdown'
+    | 'stats'
+    | 'monitor'
+    | 'categories'
+    | 'nominees'
+    | 'users'
+    | 'integrity'
+    | 'reports'
+    | 'contacts'
+    | 'countdown'
   >('stats');
 
   const [stats, setStats] = useState<any>(null);
@@ -58,17 +66,21 @@ const AdminDashboard: React.FC = () => {
 
   // Countdown
   const [countdown, setCountdown] = useState<{ targetDate: string; enabled: boolean } | null>(null);
-  const [countdownForm, setCountdownForm] = useState<{ targetDate: string; enabled: boolean }>({ targetDate: '2026-09-03T00:00:00', enabled: true });
+  const [countdownForm, setCountdownForm] = useState<{ targetDate: string; enabled: boolean }>({
+    targetDate: '2026-09-03T00:00:00',
+    enabled: true,
+  });
   const [countdownSaving, setCountdownSaving] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null); // Item being edited or null for new
-  const [modalType, setModalType] = useState<'category' | 'nominee' | 'user' | null>(
-    null
-  );
+  const [modalType, setModalType] = useState<'category' | 'nominee' | 'user' | null>(null);
   const [previewNominee, setPreviewNominee] = useState<Nominee | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFocalPoint, setImageFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+  const [imageFocalPoint, setImageFocalPoint] = useState<{ x: number; y: number }>({
+    x: 50,
+    y: 50,
+  });
   const [isDraggingFocal, setIsDraggingFocal] = useState(false);
 
   // Withdraw state
@@ -77,12 +89,17 @@ const AdminDashboard: React.FC = () => {
   const [withdrawNote, setWithdrawNote] = useState('');
 
   // Confirm dialog state
-  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // Nominees filter state
   const [nomineeSearch, setNomineeSearch] = useState('');
   const [nomineeCategoryFilter, setNomineeCategoryFilter] = useState('');
-  const [nomineeStatusFilter, setNomineeStatusFilter] = useState<'all' | 'active' | 'withdrawn'>('all');
+  const [nomineeStatusFilter, setNomineeStatusFilter] = useState<'all' | 'active' | 'withdrawn'>(
+    'all'
+  );
 
   const showConfirm = (message: string, onConfirm: () => void) => {
     setConfirmDialog({ message, onConfirm });
@@ -100,7 +117,7 @@ const AdminDashboard: React.FC = () => {
       .then((data) => setRole(data.role));
 
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Poll for monitor data when active
@@ -111,11 +128,11 @@ const AdminDashboard: React.FC = () => {
       fetch('/api/admin/stats')
         .then((res) => res.json())
         .then(setStats)
-        .catch(err => console.error('Error fetching stats:', err));
+        .catch((err) => console.error('Error fetching stats:', err));
       fetch('/api/admin/votes/recent?limit=20')
         .then((res) => res.json())
         .then((data) => setRecentVotes(Array.isArray(data) ? data : []))
-        .catch(err => {
+        .catch((err) => {
           console.error('Error fetching recent votes:', err);
           setRecentVotes([]);
         });
@@ -128,7 +145,7 @@ const AdminDashboard: React.FC = () => {
     fetch('/api/admin/stats')
       .then((res) => res.json())
       .then(setStats)
-      .catch(err => console.error('Error fetching stats:', err));
+      .catch((err) => console.error('Error fetching stats:', err));
     fetch('/api/admin/categories')
       .then((res) => res.json())
       .then((data) => {
@@ -136,7 +153,7 @@ const AdminDashboard: React.FC = () => {
         setCategories(cats);
         fetchCategoryVisibilities(cats);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Error fetching categories:', err);
         setCategories([]);
         setCategoryHiddenMap({});
@@ -144,7 +161,7 @@ const AdminDashboard: React.FC = () => {
     fetch('/api/admin/nominees/list')
       .then((res) => res.json())
       .then((data) => setNominees(data || []))
-      .catch(err => {
+      .catch((err) => {
         console.error('Error fetching nominees:', err);
         setNominees([]);
       });
@@ -155,7 +172,7 @@ const AdminDashboard: React.FC = () => {
         return [];
       })
       .then((data) => setUsers(data || []))
-      .catch(err => {
+      .catch((err) => {
         console.error('Error fetching users:', err);
         setUsers([]);
       });
@@ -163,7 +180,7 @@ const AdminDashboard: React.FC = () => {
     fetch('/api/admin/voters')
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setContacts(Array.isArray(data) ? data : []))
-      .catch(err => {
+      .catch((err) => {
         console.error('Error fetching contacts:', err);
         setContacts([]);
       });
@@ -176,26 +193,26 @@ const AdminDashboard: React.FC = () => {
           setCountdownForm({ targetDate: data.targetDate, enabled: data.enabled });
         }
       })
-      .catch(err => console.error('Error fetching countdown:', err));
+      .catch((err) => console.error('Error fetching countdown:', err));
 
     if (activeTab === 'integrity') {
       fetch('/api/admin/audit-logs')
         .then((res) => res.json())
         .then((data) => setAuditLogs(Array.isArray(data) ? data : []))
-        .catch(err => {
+        .catch((err) => {
           console.error('Error fetching audit logs:', err);
           setAuditLogs([]);
         });
       fetch('/api/admin/system/config')
         .then((res) => res.json())
         .then(setSystemConfig)
-        .catch(err => console.error('Error fetching system config:', err));
+        .catch((err) => console.error('Error fetching system config:', err));
     }
     if (activeTab === 'integrity') {
       fetch('/api/admin/votes/all')
         .then((res) => res.json())
         .then((data) => setAllVotes(Array.isArray(data) ? data : []))
-        .catch(err => {
+        .catch((err) => {
           console.error('Error fetching all votes:', err);
           setAllVotes([]);
         });
@@ -204,7 +221,7 @@ const AdminDashboard: React.FC = () => {
       fetch('/api/admin/votes/recent?limit=20')
         .then((res) => res.json())
         .then((data) => setRecentVotes(Array.isArray(data) ? data : []))
-        .catch(err => {
+        .catch((err) => {
           console.error('Error fetching recent votes:', err);
           setRecentVotes([]);
         });
@@ -350,7 +367,8 @@ const AdminDashboard: React.FC = () => {
     try {
       // Detect clone intent: only valid when editing an existing nominee
       const cloneFlag = formData.get('clone');
-      const isClone = modalType === 'nominee' && editingItem && (cloneFlag === 'true' || cloneFlag === 'on');
+      const isClone =
+        modalType === 'nominee' && editingItem && (cloneFlag === 'true' || cloneFlag === 'on');
 
       if (isClone && editingItem) {
         // POST to dedicated clone endpoint
@@ -375,7 +393,7 @@ const AdminDashboard: React.FC = () => {
           fetchData();
         } else {
           const err = await cloneRes.json().catch(() => ({}));
-          alert(err?.error ?? 'Kunne ikke klone semifinalist');
+          alert(err?.error ?? 'Kunne ikke klone deltager');
         }
       } else {
         const res = await fetch(url, {
@@ -383,7 +401,10 @@ const AdminDashboard: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(
             Object.fromEntries(
-              Object.entries(data).map(([k, v]) => [k, ['force'].includes(k) ? (v === 'true' || v === 'on') : v])
+              Object.entries(data).map(([k, v]) => [
+                k,
+                ['force'].includes(k) ? v === 'true' || v === 'on' : v,
+              ])
             )
           ),
         });
@@ -422,7 +443,7 @@ const AdminDashboard: React.FC = () => {
     showConfirm('Er du sikker på at du vil ugyldiggjøre denne stemmen?', async () => {
       setConfirmDialog(null);
       const res = await fetch('/api/admin/votes/invalidate', {
-      method: 'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, categoryId, reason }),
       });
@@ -450,23 +471,24 @@ const AdminDashboard: React.FC = () => {
       fetchData();
     } else {
       const err = await res.json().catch(() => ({}));
-      alert(err?.error ?? 'Kunne ikke trekke tilbake semifinalist');
+      alert(err?.error ?? 'Kunne ikke trekke tilbake deltager');
     }
   };
 
   const handleRestore = (id: string) => {
-    showConfirm('Gjenopprett denne Semifinalister til den offentlige listen?', async () => {
+    showConfirm('Gjenopprett denne deltageren til den offentlige listen?', async () => {
       setConfirmDialog(null);
       const res = await fetch(`/api/admin/nominees/${id}/withdraw`, { method: 'DELETE' });
       if (res.ok) {
         fetchData();
       } else {
-        alert('Kunne ikke gjenopprette semifinalist');
+        alert('Kunne ikke gjenopprette deltager');
       }
     });
   };
 
-  const openModal = (type: 'category' | 'nominee' | 'user', item: any = null) => {    setModalType(type);
+  const openModal = (type: 'category' | 'nominee' | 'user', item: any = null) => {
+    setModalType(type);
     setEditingItem(item);
     setImagePreview(null);
     if (item?.imageFocalPoint) {
@@ -478,7 +500,9 @@ const AdminDashboard: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleFocalDrag = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  const handleFocalDrag = (
+    e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
+  ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
@@ -493,6 +517,9 @@ const AdminDashboard: React.FC = () => {
     monitorCategoryFilter === 'all'
       ? categories
       : categories.filter((c) => c.id === monitorCategoryFilter);
+  const previewCategory = previewNominee
+    ? categories.find((category) => category.id === previewNominee.categoryId)
+    : undefined;
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
@@ -525,7 +552,7 @@ const AdminDashboard: React.FC = () => {
             onClick={() => setActiveTab('nominees')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'nominees' ? 'bg-unity-orange text-white' : 'hover:bg-white/10 text-gray-300'}`}
           >
-            <Award size={20} /> Semifinalister
+            <Award size={20} /> Deltakere
           </button>
           <button
             onClick={() => setActiveTab('reports')}
@@ -582,7 +609,7 @@ const AdminDashboard: React.FC = () => {
               </h2>
               <p className="text-gray-600 text-lg">
                 Her har du full oversikt over Unity Awards 2026. Bruk menyen til venstre for å
-                administrere kategorier, Semifinalister og se live stemmegivning.
+                administrere kategorier, deltakere og se live stemmegivning.
               </p>
             </div>
 
@@ -621,7 +648,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-1">
-                      Semifinalister
+                      Deltakere
                     </p>
                     <h3 className="text-4xl font-bold text-gray-800">{nominees?.length || 0}</h3>
                   </div>
@@ -874,7 +901,11 @@ const AdminDashboard: React.FC = () => {
                         <button
                           onClick={() => handleToggleVisibility(cat.id)}
                           className="text-gray-600 hover:text-gray-800 p-1"
-                          title={categoryHiddenMap[cat.id] ? 'Vis kategori offentlig' : 'Skjul kategori fra publikum'}
+                          title={
+                            categoryHiddenMap[cat.id]
+                              ? 'Vis kategori offentlig'
+                              : 'Skjul kategori fra publikum'
+                          }
                         >
                           {categoryHiddenMap[cat.id] ? <Unlock size={18} /> : <Lock size={18} />}
                         </button>
@@ -896,12 +927,12 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'nominees' && (
           <div className="max-w-5xl mx-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Semifinalister</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Deltakere</h2>
               <button
                 onClick={() => openModal('nominee')}
                 className="bg-unity-blue text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-unity-orange transition-colors"
               >
-                <Plus size={18} /> Ny semifinalist
+                <Plus size={18} /> Ny deltager
               </button>
             </div>
 
@@ -915,7 +946,16 @@ const AdminDashboard: React.FC = () => {
                   onChange={(e) => setNomineeSearch(e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm pl-8 focus:outline-none focus:ring-2 focus:ring-unity-blue"
                 />
-                <svg className="absolute left-2.5 top-2.5 text-gray-400 w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <svg
+                  className="absolute left-2.5 top-2.5 text-gray-400 w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
               </div>
               <select
                 value={nomineeCategoryFilter}
@@ -924,12 +964,16 @@ const AdminDashboard: React.FC = () => {
               >
                 <option value="">Alle kategorier</option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
                 ))}
               </select>
               <select
                 value={nomineeStatusFilter}
-                onChange={(e) => setNomineeStatusFilter(e.target.value as 'all' | 'active' | 'withdrawn')}
+                onChange={(e) =>
+                  setNomineeStatusFilter(e.target.value as 'all' | 'active' | 'withdrawn')
+                }
                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-unity-blue"
               >
                 <option value="all">Alle statuser</option>
@@ -938,7 +982,11 @@ const AdminDashboard: React.FC = () => {
               </select>
               {(nomineeSearch || nomineeCategoryFilter || nomineeStatusFilter !== 'all') && (
                 <button
-                  onClick={() => { setNomineeSearch(''); setNomineeCategoryFilter(''); setNomineeStatusFilter('all'); }}
+                  onClick={() => {
+                    setNomineeSearch('');
+                    setNomineeCategoryFilter('');
+                    setNomineeStatusFilter('all');
+                  }}
                   className="text-sm text-gray-500 hover:text-red-500 transition-colors whitespace-nowrap"
                 >
                   Nullstill filter
@@ -961,8 +1009,12 @@ const AdminDashboard: React.FC = () => {
                   {(() => {
                     const filtered = nominees.filter((nom) => {
                       const q = nomineeSearch.toLowerCase();
-                      const matchesSearch = !q || nom.name.toLowerCase().includes(q) || nom.title.toLowerCase().includes(q);
-                      const matchesCategory = !nomineeCategoryFilter || nom.categoryId === nomineeCategoryFilter;
+                      const matchesSearch =
+                        !q ||
+                        nom.name.toLowerCase().includes(q) ||
+                        nom.title.toLowerCase().includes(q);
+                      const matchesCategory =
+                        !nomineeCategoryFilter || nom.categoryId === nomineeCategoryFilter;
                       const matchesStatus =
                         nomineeStatusFilter === 'all' ||
                         (nomineeStatusFilter === 'active' && !nom.withdrawn) ||
@@ -974,85 +1026,90 @@ const AdminDashboard: React.FC = () => {
                       return (
                         <tr>
                           <td colSpan={5} className="p-8 text-center text-gray-500">
-                            {nominees.length === 0 ? 'Ingen Semifinalister funnet.' : 'Ingen treff på valgt filter.'}
+                            {nominees.length === 0
+                              ? 'Ingen deltakere funnet.'
+                              : 'Ingen treff på valgt filter.'}
                           </td>
                         </tr>
                       );
                     }
 
                     return filtered.map((nom) => (
-                    <tr key={nom.id} className={`hover:bg-gray-50 ${nom.withdrawn ? 'opacity-60 bg-gray-50' : ''}`}>
-                      <td className="p-4 font-medium flex items-center gap-3">
-                        <Image
-                          src={nom.imageUrl}
-                          alt=""
-                          width={32}
-                          height={32}
-                          unoptimized
-                          className="w-8 h-8 rounded-full object-cover bg-gray-200"
-                        />
-                        {nom.name}
-                      </td>
-                      <td className="p-4 text-gray-500">
-                        {categories.find((c) => c.id === nom.categoryId)?.title || 'Ukjent'}
-                      </td>
-                      <td className="p-4 text-gray-500">{nom.title}</td>
-                      <td className="p-4">
-                        {nom.withdrawn ? (
-                          <span
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700"
-                            title={nom.withdrawalNote}
-                          >
-                            <UserMinus size={12} /> Trukket tilbake
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Aktiv
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        <button
-                          onClick={() => setPreviewNominee(nom)}
-                          className="text-gray-600 hover:text-gray-800 p-1"
-                          title="Forhåndsvisning"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          onClick={() => openModal('nominee', nom)}
-                          className="text-blue-600 hover:text-blue-800 p-1"
-                          title="Rediger"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        {nom.withdrawn ? (
+                      <tr
+                        key={nom.id}
+                        className={`hover:bg-gray-50 ${nom.withdrawn ? 'opacity-60 bg-gray-50' : ''}`}
+                      >
+                        <td className="p-4 font-medium flex items-center gap-3">
+                          <Image
+                            src={nom.imageUrl}
+                            alt=""
+                            width={32}
+                            height={32}
+                            unoptimized
+                            className="w-8 h-8 rounded-full object-cover bg-gray-200"
+                          />
+                          {nom.name}
+                        </td>
+                        <td className="p-4 text-gray-500">
+                          {categories.find((c) => c.id === nom.categoryId)?.title || 'Ukjent'}
+                        </td>
+                        <td className="p-4 text-gray-500">{nom.title}</td>
+                        <td className="p-4">
+                          {nom.withdrawn ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700"
+                              title={nom.withdrawalNote}
+                            >
+                              <UserMinus size={12} /> Trukket tilbake
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                              Aktiv
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right space-x-2">
                           <button
-                            onClick={() => handleRestore(nom.id)}
-                            className="text-green-600 hover:text-green-800 p-1"
-                            title="Gjenopprett"
+                            onClick={() => setPreviewNominee(nom)}
+                            className="text-gray-600 hover:text-gray-800 p-1"
+                            title="Forhåndsvisning"
                           >
-                            <RotateCcw size={18} />
+                            <Eye size={18} />
                           </button>
-                        ) : (
                           <button
-                            onClick={() => openWithdrawModal(nom.id)}
-                            className="text-orange-500 hover:text-orange-700 p-1"
-                            title="Trekk tilbake"
+                            onClick={() => openModal('nominee', nom)}
+                            className="text-blue-600 hover:text-blue-800 p-1"
+                            title="Rediger"
                           >
-                            <UserMinus size={18} />
+                            <Edit size={18} />
                           </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete('nominees', nom.id)}
-                          className="text-red-600 hover:text-red-800 p-1"
-                          title="Slett"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ));
+                          {nom.withdrawn ? (
+                            <button
+                              onClick={() => handleRestore(nom.id)}
+                              className="text-green-600 hover:text-green-800 p-1"
+                              title="Gjenopprett"
+                            >
+                              <RotateCcw size={18} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => openWithdrawModal(nom.id)}
+                              className="text-orange-500 hover:text-orange-700 p-1"
+                              title="Trekk tilbake"
+                            >
+                              <UserMinus size={18} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete('nominees', nom.id)}
+                            className="text-red-600 hover:text-red-800 p-1"
+                            title="Slett"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ));
                   })()}
                 </tbody>
               </table>
@@ -1090,32 +1147,32 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   ) : (
                     users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="p-4 font-medium">{user.username}</td>
-                      <td className="p-4 text-gray-500">{user.email || '-'}</td>
-                      <td className="p-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        <button
-                          onClick={() => openModal('user', user)}
-                          className="text-blue-600 hover:text-blue-800 p-1"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete('users', user.id)}
-                          className="text-red-600 hover:text-red-800 p-1"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                      <tr key={user.id} className="hover:bg-gray-50">
+                        <td className="p-4 font-medium">{user.username}</td>
+                        <td className="p-4 text-gray-500">{user.email || '-'}</td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}
+                          >
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right space-x-2">
+                          <button
+                            onClick={() => openModal('user', user)}
+                            className="text-blue-600 hover:text-blue-800 p-1"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete('users', user.id)}
+                            className="text-red-600 hover:text-red-800 p-1"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
@@ -1215,12 +1272,23 @@ const AdminDashboard: React.FC = () => {
               {/* Current config info */}
               {countdown ? (
                 <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 space-y-1">
-                  <p><span className="font-medium">Gjeldende måldato:</span> {new Date(countdown.targetDate).toLocaleString('nb-NO')}</p>
-                  <p><span className="font-medium">Status:</span> {countdown.enabled ? <span className="text-green-600 font-medium">Aktiv</span> : <span className="text-red-500 font-medium">Skjult</span>}</p>
+                  <p>
+                    <span className="font-medium">Gjeldende måldato:</span>{' '}
+                    {new Date(countdown.targetDate).toLocaleString('nb-NO')}
+                  </p>
+                  <p>
+                    <span className="font-medium">Status:</span>{' '}
+                    {countdown.enabled ? (
+                      <span className="text-green-600 font-medium">Aktiv</span>
+                    ) : (
+                      <span className="text-red-500 font-medium">Skjult</span>
+                    )}
+                  </p>
                 </div>
               ) : (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-700">
-                  Ingen nedtelling er konfigurert. Sett en måldato nedenfor for å aktivere nedtelling og stemmefristen.
+                  Ingen nedtelling er konfigurert. Sett en måldato nedenfor for å aktivere
+                  nedtelling og stemmefristen.
                 </div>
               )}
 
@@ -1250,7 +1318,9 @@ const AdminDashboard: React.FC = () => {
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Måldato og -tid</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Måldato og -tid
+                  </label>
                   <input
                     type="datetime-local"
                     value={countdownForm.targetDate.slice(0, 16)}
@@ -1267,12 +1337,13 @@ const AdminDashboard: React.FC = () => {
                     id="countdown-enabled"
                     type="checkbox"
                     checked={countdownForm.enabled}
-                    onChange={(e) =>
-                      setCountdownForm((f) => ({ ...f, enabled: e.target.checked }))
-                    }
+                    onChange={(e) => setCountdownForm((f) => ({ ...f, enabled: e.target.checked }))}
                     className="w-4 h-4 accent-unity-orange cursor-pointer"
                   />
-                  <label htmlFor="countdown-enabled" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  <label
+                    htmlFor="countdown-enabled"
+                    className="text-sm font-medium text-gray-700 cursor-pointer"
+                  >
                     Vis nedtelling på forsiden
                   </label>
                 </div>
@@ -1290,14 +1361,14 @@ const AdminDashboard: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        if (!confirm('Slette nedtelling? Nedtellingen vil ikke lenger vises.')) return;
-                        fetch('/api/admin/countdown', { method: 'DELETE' })
-                          .then((res) => {
-                            if (res.ok) {
-                              setCountdown(null);
-                              setCountdownForm({ targetDate: '', enabled: true });
-                            }
-                          });
+                        if (!confirm('Slette nedtelling? Nedtellingen vil ikke lenger vises.'))
+                          return;
+                        fetch('/api/admin/countdown', { method: 'DELETE' }).then((res) => {
+                          if (res.ok) {
+                            setCountdown(null);
+                            setCountdownForm({ targetDate: '', enabled: true });
+                          }
+                        });
                       }}
                       className="flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
                     >
@@ -1419,29 +1490,29 @@ const AdminDashboard: React.FC = () => {
                       </tr>
                     ) : (
                       auditLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="p-4 text-sm text-gray-500">
-                          {new Date(log.timestamp).toLocaleString()}
-                        </td>
-                        <td className="p-4 text-sm font-medium uppercase tracking-wider">
-                          {log.type}
-                        </td>
-                        <td className="p-4">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
-                              log.severity === 'high'
-                                ? 'bg-red-100 text-red-700'
-                                : log.severity === 'medium'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-blue-100 text-blue-700'
-                            }`}
-                          >
-                            {log.severity}
-                          </span>
-                        </td>
-                        <td className="p-4 text-sm">{log.message}</td>
-                      </tr>
-                    ))
+                        <tr key={log.id} className="hover:bg-gray-50">
+                          <td className="p-4 text-sm text-gray-500">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </td>
+                          <td className="p-4 text-sm font-medium uppercase tracking-wider">
+                            {log.type}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
+                                log.severity === 'high'
+                                  ? 'bg-red-100 text-red-700'
+                                  : log.severity === 'medium'
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : 'bg-blue-100 text-blue-700'
+                              }`}
+                            >
+                              {log.severity}
+                            </span>
+                          </td>
+                          <td className="p-4 text-sm">{log.message}</td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
@@ -1460,7 +1531,7 @@ const AdminDashboard: React.FC = () => {
               {modalType === 'category'
                 ? 'Kategori'
                 : modalType === 'nominee'
-                  ? 'semifinalist'
+                  ? 'deltager'
                   : 'Bruker'}
             </h3>
             <form onSubmit={handleSave} className="space-y-4">
@@ -1492,12 +1563,22 @@ const AdminDashboard: React.FC = () => {
                     {(imagePreview || editingItem?.imageUrl) && (
                       <div
                         className="w-full h-32 overflow-hidden rounded-lg mb-1 border relative select-none cursor-crosshair"
-                        onMouseDown={(e) => { setIsDraggingFocal(true); handleFocalDrag(e); }}
-                        onMouseMove={(e) => { if (isDraggingFocal) handleFocalDrag(e); }}
+                        onMouseDown={(e) => {
+                          setIsDraggingFocal(true);
+                          handleFocalDrag(e);
+                        }}
+                        onMouseMove={(e) => {
+                          if (isDraggingFocal) handleFocalDrag(e);
+                        }}
                         onMouseUp={() => setIsDraggingFocal(false)}
                         onMouseLeave={() => setIsDraggingFocal(false)}
-                        onTouchStart={(e) => { setIsDraggingFocal(true); handleFocalDrag(e); }}
-                        onTouchMove={(e) => { if (isDraggingFocal) handleFocalDrag(e); }}
+                        onTouchStart={(e) => {
+                          setIsDraggingFocal(true);
+                          handleFocalDrag(e);
+                        }}
+                        onTouchMove={(e) => {
+                          if (isDraggingFocal) handleFocalDrag(e);
+                        }}
                         onTouchEnd={() => setIsDraggingFocal(false)}
                       >
                         <Image
@@ -1510,7 +1591,11 @@ const AdminDashboard: React.FC = () => {
                         />
                         <div
                           className="absolute w-5 h-5 rounded-full border-2 border-white shadow-lg bg-white/20 pointer-events-none"
-                          style={{ left: `${imageFocalPoint.x}%`, top: `${imageFocalPoint.y}%`, transform: 'translate(-50%, -50%)' }}
+                          style={{
+                            left: `${imageFocalPoint.x}%`,
+                            top: `${imageFocalPoint.y}%`,
+                            transform: 'translate(-50%, -50%)',
+                          }}
                         />
                         <p className="absolute bottom-1 right-2 text-xs text-white bg-black/40 px-1.5 py-0.5 rounded pointer-events-none">
                           Dra for å justere
@@ -1590,7 +1675,7 @@ const AdminDashboard: React.FC = () => {
                         className="w-4 h-4 accent-unity-orange"
                       />
                       <label htmlFor="clone-nominee" className="text-sm text-gray-700">
-                        Lag kopi i målkategori (behold gammel semifinalist og stemmer)
+                        Lag kopi i målkategori (behold gammel deltager og stemmer)
                       </label>
                     </div>
                   )}
@@ -1623,15 +1708,27 @@ const AdminDashboard: React.FC = () => {
                       <div className="flex gap-4 mb-3 items-start">
                         {/* Focal point editor — portrait card */}
                         <div className="flex-1">
-                          <p className="text-xs text-gray-500 mb-1 font-medium">Juster fokuspunkt</p>
+                          <p className="text-xs text-gray-500 mb-1 font-medium">
+                            Juster fokuspunkt
+                          </p>
                           <div
                             className="w-full aspect-[3/4] overflow-hidden rounded-xl border border-gray-200 relative select-none cursor-crosshair shadow-sm"
-                            onMouseDown={(e) => { setIsDraggingFocal(true); handleFocalDrag(e); }}
-                            onMouseMove={(e) => { if (isDraggingFocal) handleFocalDrag(e); }}
+                            onMouseDown={(e) => {
+                              setIsDraggingFocal(true);
+                              handleFocalDrag(e);
+                            }}
+                            onMouseMove={(e) => {
+                              if (isDraggingFocal) handleFocalDrag(e);
+                            }}
                             onMouseUp={() => setIsDraggingFocal(false)}
                             onMouseLeave={() => setIsDraggingFocal(false)}
-                            onTouchStart={(e) => { setIsDraggingFocal(true); handleFocalDrag(e); }}
-                            onTouchMove={(e) => { if (isDraggingFocal) handleFocalDrag(e); }}
+                            onTouchStart={(e) => {
+                              setIsDraggingFocal(true);
+                              handleFocalDrag(e);
+                            }}
+                            onTouchMove={(e) => {
+                              if (isDraggingFocal) handleFocalDrag(e);
+                            }}
                             onTouchEnd={() => setIsDraggingFocal(false)}
                           >
                             <Image
@@ -1640,11 +1737,17 @@ const AdminDashboard: React.FC = () => {
                               fill
                               unoptimized
                               className="object-cover pointer-events-none"
-                              style={{ objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%` }}
+                              style={{
+                                objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%`,
+                              }}
                             />
                             <div
                               className="absolute w-5 h-5 rounded-full border-2 border-white shadow-lg bg-white/30 pointer-events-none ring-2 ring-unity-orange/60"
-                              style={{ left: `${imageFocalPoint.x}%`, top: `${imageFocalPoint.y}%`, transform: 'translate(-50%, -50%)' }}
+                              style={{
+                                left: `${imageFocalPoint.x}%`,
+                                top: `${imageFocalPoint.y}%`,
+                                transform: 'translate(-50%, -50%)',
+                              }}
                             />
                             <p className="absolute bottom-2 left-0 right-0 text-center text-xs text-white bg-black/40 py-0.5 pointer-events-none">
                               Dra for å justere
@@ -1662,7 +1765,9 @@ const AdminDashboard: React.FC = () => {
                                 fill
                                 unoptimized
                                 className="object-cover"
-                                style={{ objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%` }}
+                                style={{
+                                  objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%`,
+                                }}
                               />
                             </div>
                             <div className="p-2 text-center">
@@ -1745,7 +1850,8 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   {!editingItem && (
                     <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
-                      En invitasjon vil bli sendt til denne e-postadressen med påloggingsinformasjon.
+                      En invitasjon vil bli sendt til denne e-postadressen med
+                      påloggingsinformasjon.
                     </div>
                   )}
                 </>
@@ -1754,7 +1860,10 @@ const AdminDashboard: React.FC = () => {
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => { setIsModalOpen(false); setImagePreview(null); }}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setImagePreview(null);
+                  }}
                   className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
                   Avbryt
@@ -1774,6 +1883,8 @@ const AdminDashboard: React.FC = () => {
       {previewNominee && (
         <VoteModal
           nominee={previewNominee}
+          categoryTitle={previewCategory?.title}
+          categorySlug={previewCategory?.slug}
           onClose={() => setPreviewNominee(null)}
           onSuccess={() => {}}
           mode="preview"
@@ -1785,10 +1896,10 @@ const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-              <UserMinus size={20} className="text-orange-500" /> Trekk tilbake semifinalist
+              <UserMinus size={20} className="text-orange-500" /> Trekk tilbake deltager
             </h3>
             <p className="text-gray-500 text-sm mb-4">
-              Semifinalister vil ikke lenger vises offentlig. Du kan gjenopprette dem senere.
+              Deltakere vil ikke lenger vises offentlig. Du kan gjenopprette dem senere.
             </p>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Begrunnelse (kreves)
@@ -1802,7 +1913,11 @@ const AdminDashboard: React.FC = () => {
             />
             <div className="flex gap-3 mt-4 justify-end">
               <button
-                onClick={() => { setWithdrawModalOpen(false); setWithdrawTargetId(null); setWithdrawNote(''); }}
+                onClick={() => {
+                  setWithdrawModalOpen(false);
+                  setWithdrawTargetId(null);
+                  setWithdrawNote('');
+                }}
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Avbryt

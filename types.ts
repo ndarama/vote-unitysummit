@@ -1,5 +1,6 @@
 export interface Category {
   id: string;
+  slug?: string;
   title: string;
   description: string;
   imageUrl: string;
@@ -11,6 +12,7 @@ export interface Category {
 
 export interface Nominee {
   id: string;
+  slug?: string;
   categoryId: string;
   name: string;
   title: string;

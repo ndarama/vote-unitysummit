@@ -33,14 +33,20 @@ export async function POST(request: NextRequest) {
     const { categoryId, name, title, description, imageUrl } = body;
 
     if (!categoryId || !name || !title || !description || !imageUrl) {
-      return Response.json({ error: 'Missing required fields: categoryId, name, title, description, imageUrl' }, { status: 400 });
+      return Response.json(
+        { error: 'Missing required fields: categoryId, name, title, description, imageUrl' },
+        { status: 400 }
+      );
     }
 
     const duplicate = await prisma.nominee.findFirst({
       where: { categoryId, name: { equals: name, mode: 'insensitive' } },
     });
     if (duplicate) {
-      return Response.json({ error: `A semifinalist named "${name}" already exists in this category` }, { status: 409 });
+      return Response.json(
+        { error: `A deltager named "${name}" already exists in this category` },
+        { status: 409 }
+      );
     }
 
     const nominee = await prisma.nominee.create({

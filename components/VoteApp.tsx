@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Category, Nominee } from '../types';
 import SafeImage from './SafeImage';
 import CategorySection from './CategorySection';
-import { Lock, ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { toSlug } from '@/lib/slug';
 
 const VoteModal = dynamic(() => import('./VoteModal'), { ssr: false });
 const AdminDashboard = dynamic(() => import('./AdminDashboard'), { ssr: false });
@@ -18,15 +19,25 @@ interface VoteAppProps {
   isAdmin?: boolean;
 }
 
+interface RouteResolution {
+  canonicalPath: string;
+  category: Category;
+  nominee?: Nominee | null;
+}
+
 const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
   const params = useParams<{ categoryId?: string }>();
-  const categoryId = params?.categoryId;
+  const categorySlug = params?.categoryId;
+  const searchParams = useSearchParams();
+  const deltagerSlug = searchParams.get('deltager') ?? searchParams.get('nominee');
+  const pathname = usePathname();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [nominees, setNominees] = useState<Nominee[]>([]);
   const [selectedNominee, setSelectedNominee] = useState<Nominee | null>(null);
   const [modalMode, setModalMode] = useState<'stats' | 'vote'>('stats');
   const [userVotes, setUserVotes] = useState<any[]>([]); // { categoryId, nomineeId }
+  const [routeResolution, setRouteResolution] = useState<RouteResolution | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +79,8 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
 
   const handleVoteClick = (nominee: Nominee, mode: 'stats' | 'vote' = 'vote') => {
     if (mode === 'vote') {
-      const hasVoted = Array.isArray(userVotes) && userVotes.some((v) => v.categoryId === nominee.categoryId);
+      const hasVoted =
+        Array.isArray(userVotes) && userVotes.some((v) => v.categoryId === nominee.categoryId);
       if (hasVoted) {
         alert('Du har allerede stemt i denne kategorien.');
         return;
@@ -83,14 +95,106 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
     setSelectedNominee(null);
   };
 
+  useEffect(() => {
+    if (!categorySlug) {
+      setRouteResolution(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const resolveRoute = async () => {
+      try {
+        const params = new URLSearchParams({ category: categorySlug });
+
+        if (deltagerSlug) {
+          params.set('deltager', deltagerSlug);
+        }
+
+        const response = await fetch(`/api/resolve?${params.toString()}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          setRouteResolution(null);
+          return;
+        }
+
+        const resolution: RouteResolution = await response.json();
+        setRouteResolution(resolution);
+
+        const currentPath = `${pathname}${window.location.search}`;
+        if (resolution.canonicalPath !== currentPath) {
+          router.replace(resolution.canonicalPath, { scroll: false });
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Error resolving route:', err);
+        setRouteResolution(null);
+      }
+    };
+
+    void resolveRoute();
+
+    return () => {
+      controller.abort();
+    };
+  }, [categorySlug, deltagerSlug, pathname, router]);
+
+  const decodedCategorySlug = categorySlug ? decodeURIComponent(categorySlug) : undefined;
+  const selectedCategory = decodedCategorySlug
+    ? (routeResolution?.category ??
+      categories.find(
+        (category) => category.slug === decodedCategorySlug || category.id === decodedCategorySlug
+      ) ??
+      null)
+    : null;
+
+  useEffect(() => {
+    if (!deltagerSlug || !selectedCategory || nominees.length === 0) {
+      return;
+    }
+
+    const decodedNomineeSlug = decodeURIComponent(deltagerSlug);
+    const resolvedNominee = routeResolution?.nominee;
+    const sharedNominee =
+      (resolvedNominee
+        ? (nominees.find((nominee) => nominee.id === resolvedNominee.id) ?? resolvedNominee)
+        : null) ??
+      nominees.find(
+        (nominee) =>
+          nominee.categoryId === selectedCategory.id && nominee.slug === decodedNomineeSlug
+      );
+
+    if (sharedNominee && selectedNominee?.id !== sharedNominee.id) {
+      setModalMode('stats');
+      setSelectedNominee(sharedNominee);
+    }
+  }, [deltagerSlug, nominees, routeResolution?.nominee, selectedCategory, selectedNominee?.id]);
+
+  const closeModal = () => {
+    setSelectedNominee(null);
+
+    if (deltagerSlug && selectedCategory?.slug) {
+      router.replace(`/category/${selectedCategory.slug}`, { scroll: false });
+    }
+  };
+
   if (isAdmin) {
     return <AdminDashboard />;
   }
 
   // Filter categories if a specific one is selected
-  const displayedCategories = categoryId
-    ? categories.filter((c) => c.id === categoryId)
+  const displayedCategories = categorySlug
+    ? selectedCategory
+      ? [selectedCategory]
+      : []
     : categories;
+  const selectedNomineeCategory = selectedNominee
+    ? categories.find((category) => category.id === selectedNominee.categoryId)
+    : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
@@ -128,8 +232,8 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
 
           {!loading && !error && (
             <>
-              {categoryId ? (
-                // Detail View: Show specific category and nominees
+              {categorySlug ? (
+                // Detail View: Show specific category and deltakere
                 <div>
                   <Link
                     href="/"
@@ -143,7 +247,11 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                       category={category}
                       nominees={nominees.filter((n) => n.categoryId === category.id)}
                       onSelect={handleVoteClick}
-                      userVote={Array.isArray(userVotes) ? userVotes.find((v) => v.categoryId === category.id)?.nomineeId : undefined}
+                      userVote={
+                        Array.isArray(userVotes)
+                          ? userVotes.find((v) => v.categoryId === category.id)?.nomineeId
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -155,13 +263,17 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                   </h2>
                   <div className="grid md:grid-cols-2 gap-6">
                     {categories.map((category) => {
-                      const hasVoted = Array.isArray(userVotes) && userVotes.some((v) => v.categoryId === category.id);
+                      const hasVoted =
+                        Array.isArray(userVotes) &&
+                        userVotes.some((v) => v.categoryId === category.id);
                       const categoryNominees = nominees.filter((n) => n.categoryId === category.id);
 
                       return (
                         <div
                           key={category.id}
-                          onClick={() => router.push(`/category/${category.id}`)}
+                          onClick={() =>
+                            router.push(`/category/${category.slug ?? toSlug(category.title)}`)
+                          }
                           className={`block rounded-2xl border transition-all duration-300 group hover:shadow-xl overflow-hidden flex flex-col h-full cursor-pointer ${
                             hasVoted
                               ? 'bg-green-50 border-green-200 hover:border-green-300'
@@ -175,12 +287,16 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                               fill
                               sizes="(max-width: 768px) 100vw, 50vw"
                               className="object-cover transition-transform duration-500 group-hover:scale-105"
-                              style={category.imageFocalPoint ? { objectPosition: category.imageFocalPoint } : undefined}
+                              style={
+                                category.imageFocalPoint
+                                  ? { objectPosition: category.imageFocalPoint }
+                                  : undefined
+                              }
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div className="absolute bottom-4 left-6 text-white">
                               <p className="text-sm font-medium uppercase tracking-wider opacity-90">
-                                {categoryNominees.length} Finalister
+                                {categoryNominees.length} Deltakere
                               </p>
                             </div>
                           </div>
@@ -238,18 +354,18 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
                         </div>
 
                         <p className="text-gray-300 mb-8 leading-relaxed flex-grow">
-                          Gå ikke glipp av årets mest inspirerende arrangement. 
-                          Sikre deg plass på Unity Summit & Awards 2026 i dag, 
-                          og opplev lederskap og fellesskap på nært hold
+                          Gå ikke glipp av årets mest inspirerende arrangement. Sikre deg plass på
+                          Unity Summit & Awards 2026 i dag, og opplev lederskap og fellesskap på
+                          nært hold
                         </p>
 
                         <div className="mt-auto">
-                          <a
-                            href="#"
+                          <Link
+                            href="/billetter"
                             className="inline-block w-full py-3 bg-white text-[#001f2b] font-bold text-center rounded-xl hover:bg-gray-100 transition-colors"
                           >
                             Kjøp billetter
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -264,12 +380,13 @@ const VoteApp: React.FC<VoteAppProps> = ({ isAdmin }) => {
       {selectedNominee && (
         <VoteModal
           nominee={selectedNominee}
-          onClose={() => setSelectedNominee(null)}
+          categoryTitle={selectedNomineeCategory?.title}
+          categorySlug={selectedNomineeCategory?.slug}
+          onClose={closeModal}
           onSuccess={() => handleVoteSuccess(selectedNominee.id, selectedNominee.categoryId)}
           mode={modalMode}
         />
       )}
-
     </div>
   );
 };

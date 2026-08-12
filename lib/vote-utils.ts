@@ -54,7 +54,7 @@ export interface VoteTimePeriod {
 export function groupVotesByHour(votes: Array<{ timestamp: number }>): VoteTimePeriod[] {
   const groups = new Map<string, number>();
 
-  votes.forEach(vote => {
+  votes.forEach((vote) => {
     const date = new Date(vote.timestamp);
     const hour = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:00`;
     groups.set(hour, (groups.get(hour) || 0) + 1);
@@ -68,7 +68,7 @@ export function groupVotesByHour(votes: Array<{ timestamp: number }>): VoteTimeP
 export function groupVotesByDay(votes: Array<{ timestamp: number }>): VoteTimePeriod[] {
   const groups = new Map<string, number>();
 
-  votes.forEach(vote => {
+  votes.forEach((vote) => {
     const date = new Date(vote.timestamp);
     const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     groups.set(day, (groups.get(day) || 0) + 1);
@@ -130,7 +130,7 @@ export function calculateVoteVelocity(
 
   const now = Date.now();
   const periodMs = periodHours * 60 * 60 * 1000;
-  const recentVotes = votes.filter(v => now - v.timestamp < periodMs);
+  const recentVotes = votes.filter((v) => now - v.timestamp < periodMs);
 
   return recentVotes.length / periodHours;
 }
@@ -146,9 +146,9 @@ export interface ManipulationPattern {
 }
 
 export function detectManipulationPatterns(
-  votes: Array<{ 
-    timestamp: number; 
-    ip?: string; 
+  votes: Array<{
+    timestamp: number;
+    ip?: string;
     email: string;
     anomalyScore?: number;
   }>
@@ -177,7 +177,7 @@ export function detectManipulationPatterns(
 
   // Check for IP clustering
   const ipCounts = new Map<string, number>();
-  votes.forEach(v => {
+  votes.forEach((v) => {
     if (v.ip) {
       ipCounts.set(v.ip, (ipCounts.get(v.ip) || 0) + 1);
     }
@@ -203,7 +203,7 @@ export function detectManipulationPatterns(
 
   // Check for unusual time patterns (all votes at exact same minute)
   const minuteCounts = new Map<number, number>();
-  votes.forEach(v => {
+  votes.forEach((v) => {
     const minute = Math.floor(v.timestamp / 60000);
     minuteCounts.set(minute, (minuteCounts.get(minute) || 0) + 1);
   });
@@ -220,7 +220,7 @@ export function detectManipulationPatterns(
   });
 
   // Check for high anomaly scores
-  const highAnomalyVotes = votes.filter(v => (v.anomalyScore || 0) >= 70);
+  const highAnomalyVotes = votes.filter((v) => (v.anomalyScore || 0) >= 70);
   if (highAnomalyVotes.length > 10) {
     patterns.push({
       type: 'suspicious_pattern',
@@ -254,9 +254,9 @@ export function generateVoteSummary(
   }>
 ): VoteSummary {
   const total = votes.length;
-  const valid = votes.filter(v => !v.invalid).length;
-  const invalid = votes.filter(v => v.invalid).length;
-  const flagged = votes.filter(v => v.flagged).length;
+  const valid = votes.filter((v) => !v.invalid).length;
+  const invalid = votes.filter((v) => v.invalid).length;
+  const flagged = votes.filter((v) => v.flagged).length;
 
   const totalAnomalyScore = votes.reduce((sum, v) => sum + (v.anomalyScore || 0), 0);
   const averageAnomalyScore = total > 0 ? Math.round(totalAnomalyScore / total) : 0;
@@ -326,7 +326,7 @@ export function exportVotesToCSV(
     'ID',
     'Email',
     'Category ID',
-    'Nominee ID',
+    'Deltager ID',
     'Timestamp',
     'Date',
     'IP',
@@ -335,7 +335,7 @@ export function exportVotesToCSV(
     'Invalid',
   ];
 
-  const rows = votes.map(vote => [
+  const rows = votes.map((vote) => [
     vote.id,
     vote.email,
     vote.categoryId,
@@ -350,7 +350,7 @@ export function exportVotesToCSV(
 
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
   ].join('\n');
 
   return csvContent;

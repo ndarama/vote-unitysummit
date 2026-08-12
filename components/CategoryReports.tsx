@@ -98,7 +98,7 @@ const CategoryReports: React.FC = () => {
   useEffect(() => {
     fetchCategories();
     fetchReport();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCategories = async () => {
@@ -140,7 +140,7 @@ const CategoryReports: React.FC = () => {
   };
 
   const handleFilterChange = (key: keyof CategoryReportFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const exportToPDF = async () => {
@@ -148,13 +148,14 @@ const CategoryReports: React.FC = () => {
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    
+
     // Add logo
     try {
-      const logoUrl = 'https://res.cloudinary.com/dulzeafbm/image/upload/v1776696301/Unity_Summit_Logo_wh_e6zitf.png';
+      const logoUrl =
+        'https://res.cloudinary.com/dulzeafbm/image/upload/v1776696301/Unity_Summit_Logo_wh_e6zitf.png';
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      
+
       await new Promise((resolve, reject) => {
         img.onload = () => {
           try {
@@ -164,7 +165,7 @@ const CategoryReports: React.FC = () => {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0);
             const imgData = canvas.toDataURL('image/png');
-            
+
             // Add logo (centered, at top)
             const logoWidth = 40;
             const logoHeight = (img.height / img.width) * logoWidth;
@@ -181,28 +182,32 @@ const CategoryReports: React.FC = () => {
     } catch (error) {
       console.error('Error loading logo:', error);
     }
-    
+
     // Title
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text('Unity Summit - Category Voting Report', pageWidth / 2, 35, { align: 'center' });
-    
+
     // Generated date
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const generatedDate = new Date(reportData.generatedAt).toLocaleString('no-NO');
     doc.text(`Generated: ${generatedDate}`, pageWidth / 2, 43, { align: 'center' });
-    
+
     // Filter info
     if (filters.categoryId !== 'all') {
-      const selectedCategory = reportData.categories.find(c => c.category.id === filters.categoryId);
+      const selectedCategory = reportData.categories.find(
+        (c) => c.category.id === filters.categoryId
+      );
       if (selectedCategory) {
         doc.setFontSize(9);
         doc.setTextColor(100, 100, 100);
-        doc.text(`Category: ${selectedCategory.category.title}`, pageWidth / 2, 49, { align: 'center' });
+        doc.text(`Category: ${selectedCategory.category.title}`, pageWidth / 2, 49, {
+          align: 'center',
+        });
       }
     }
-    
+
     let yPos = 58;
 
     // Reset text color
@@ -239,9 +244,10 @@ const CategoryReports: React.FC = () => {
     }
 
     // Category Reports - filter based on selection
-    const categoriesToExport = filters.categoryId === 'all' 
-      ? reportData.categories 
-      : reportData.categories.filter(c => c.category.id === filters.categoryId);
+    const categoriesToExport =
+      filters.categoryId === 'all'
+        ? reportData.categories
+        : reportData.categories.filter((c) => c.category.id === filters.categoryId);
 
     categoriesToExport.forEach((categoryReport, index) => {
       // Check if we need a new page
@@ -277,7 +283,7 @@ const CategoryReports: React.FC = () => {
 
       yPos = (doc as any).lastAutoTable.finalY + 10;
 
-      // Nominee Results
+      // Deltager Results
       if (yPos > 220) {
         doc.addPage();
         yPos = 20;
@@ -285,7 +291,7 @@ const CategoryReports: React.FC = () => {
 
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('Nominee Results:', 14, yPos);
+      doc.text('Deltager Results:', 14, yPos);
       yPos += 6;
 
       const nomineeData = categoryReport.nominees.map((nominee, idx) => [
@@ -319,15 +325,17 @@ const CategoryReports: React.FC = () => {
   const exportToCSV = () => {
     if (!reportData) return;
 
-    let csvContent = 'Category,Nominee Name,Nominee Title,Votes,Percentage,Flagged Votes,Invalid Votes\n';
+    let csvContent =
+      'Category,Deltager Name,Deltager Title,Votes,Percentage,Flagged Votes,Invalid Votes\n';
 
     // Filter based on selection
-    const categoriesToExport = filters.categoryId === 'all' 
-      ? reportData.categories 
-      : reportData.categories.filter(c => c.category.id === filters.categoryId);
+    const categoriesToExport =
+      filters.categoryId === 'all'
+        ? reportData.categories
+        : reportData.categories.filter((c) => c.category.id === filters.categoryId);
 
-    categoriesToExport.forEach(categoryReport => {
-      categoryReport.nominees.forEach(nominee => {
+    categoriesToExport.forEach((categoryReport) => {
+      categoryReport.nominees.forEach((nominee) => {
         csvContent += `"${categoryReport.category.title}","${nominee.name}","${nominee.title}",${nominee.votes},${nominee.percentage}%,${nominee.flaggedVotes},${nominee.invalidVotes}\n`;
       });
     });
@@ -336,7 +344,10 @@ const CategoryReports: React.FC = () => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `unity-summit-report-${filters.categoryId}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute(
+      'download',
+      `unity-summit-report-${filters.categoryId}-${new Date().toISOString().split('T')[0]}.csv`
+    );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -370,13 +381,11 @@ const CategoryReports: React.FC = () => {
             <Filter className="w-5 h-5" />
             Filters
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Category Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
               <select
                 value={filters.categoryId}
                 onChange={(e) => handleFilterChange('categoryId', e.target.value)}
@@ -393,9 +402,7 @@ const CategoryReports: React.FC = () => {
 
             {/* Start Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
               <input
                 type="date"
                 value={filters.startDate}
@@ -406,9 +413,7 @@ const CategoryReports: React.FC = () => {
 
             {/* End Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
               <input
                 type="date"
                 value={filters.endDate}
@@ -488,7 +493,7 @@ const CategoryReports: React.FC = () => {
               <BarChart2 className="w-6 h-6 text-blue-500" />
               Overall Summary
             </h3>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="text-sm text-gray-600 mb-1">Categories</div>
@@ -531,7 +536,10 @@ const CategoryReports: React.FC = () => {
 
           {/* Category Reports */}
           {reportData.categories.map((categoryReport, index) => (
-            <div key={categoryReport.category.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <div
+              key={categoryReport.category.id}
+              className="bg-white p-6 rounded-lg shadow-md border border-gray-200"
+            >
               <h3 className="text-xl font-semibold mb-4">
                 {index + 1}. {categoryReport.category.title}
               </h3>
@@ -544,29 +552,37 @@ const CategoryReports: React.FC = () => {
                 </div>
                 <div className="bg-green-50 p-3 rounded-lg">
                   <div className="text-xs text-gray-600 mb-1">Valid</div>
-                  <div className="text-lg font-bold text-green-600">{categoryReport.stats.validVotes}</div>
+                  <div className="text-lg font-bold text-green-600">
+                    {categoryReport.stats.validVotes}
+                  </div>
                 </div>
                 <div className="bg-red-50 p-3 rounded-lg">
                   <div className="text-xs text-gray-600 mb-1">Invalid</div>
-                  <div className="text-lg font-bold text-red-600">{categoryReport.stats.invalidVotes}</div>
+                  <div className="text-lg font-bold text-red-600">
+                    {categoryReport.stats.invalidVotes}
+                  </div>
                 </div>
                 <div className="bg-orange-50 p-3 rounded-lg">
                   <div className="text-xs text-gray-600 mb-1">Flagged</div>
-                  <div className="text-lg font-bold text-orange-600">{categoryReport.stats.flaggedVotes}</div>
+                  <div className="text-lg font-bold text-orange-600">
+                    {categoryReport.stats.flaggedVotes}
+                  </div>
                 </div>
                 <div className="bg-indigo-50 p-3 rounded-lg">
                   <div className="text-xs text-gray-600 mb-1">Unique Voters</div>
-                  <div className="text-lg font-bold text-indigo-600">{categoryReport.stats.uniqueVoters}</div>
+                  <div className="text-lg font-bold text-indigo-600">
+                    {categoryReport.stats.uniqueVoters}
+                  </div>
                 </div>
               </div>
 
-              {/* Nominee Results Table */}
+              {/* Deltager Results Table */}
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-100 border-b border-gray-200">
                       <th className="px-4 py-3 text-left text-sm font-semibold">Rank</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Nominee</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Deltager</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold">Title</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold">Votes</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold">Percentage</th>
@@ -578,12 +594,17 @@ const CategoryReports: React.FC = () => {
                     {categoryReport.nominees.map((nominee, idx) => (
                       <tr key={nominee.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
-                            idx === 0 ? 'bg-yellow-100 text-yellow-700' :
-                            idx === 1 ? 'bg-gray-100 text-gray-700' :
-                            idx === 2 ? 'bg-orange-100 text-orange-700' :
-                            'bg-gray-50 text-gray-600'
-                          } font-bold text-sm`}>
+                          <span
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
+                              idx === 0
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : idx === 1
+                                  ? 'bg-gray-100 text-gray-700'
+                                  : idx === 2
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : 'bg-gray-50 text-gray-600'
+                            } font-bold text-sm`}
+                          >
                             {idx + 1}
                           </span>
                         </td>
@@ -630,7 +651,9 @@ const CategoryReports: React.FC = () => {
         <div className="bg-white p-12 rounded-lg shadow-md border border-gray-200 text-center">
           <FileBarChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">No Report Generated</h3>
-          <p className="text-gray-600">Click &quot;Generate Report&quot; to create your first report</p>
+          <p className="text-gray-600">
+            Click &quot;Generate Report&quot; to create your first report
+          </p>
         </div>
       )}
     </div>

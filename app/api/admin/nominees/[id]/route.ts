@@ -4,10 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { db } from '@/server/db';
 import { normalizeImageUrl, withNormalizedImageUrl } from '@/lib/image-url';
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const role = await requireRole(['admin', 'manager']);
     if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -18,7 +15,7 @@ export async function GET(
       include: { category: { select: { id: true, title: true } } },
     });
 
-    if (!nominee) return Response.json({ error: 'Nominee not found' }, { status: 404 });
+    if (!nominee) return Response.json({ error: 'Deltager not found' }, { status: 404 });
     return Response.json(withNormalizedImageUrl(nominee));
   } catch (err) {
     console.error('GET /api/admin/nominees/[id]:', err);
@@ -26,10 +23,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const role = await requireRole(['admin', 'manager']);
     if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -39,16 +33,25 @@ export async function PUT(
     const { categoryId, name, title, description, imageUrl, force } = body;
 
     const existing = await prisma.nominee.findUnique({ where: { id } });
-    if (!existing) return Response.json({ error: 'Nominee not found' }, { status: 404 });
+    if (!existing) return Response.json({ error: 'Deltager not found' }, { status: 404 });
 
     // If transferring to a different category, ensure target category has no votes unless forced
     if (categoryId !== undefined && categoryId !== existing.categoryId) {
       const targetVoteCount = await prisma.vote.count({ where: { categoryId, invalid: false } });
       if (targetVoteCount > 0 && !force) {
-        return Response.json({ error: 'Mål-kategori har allerede stemmer. Bruk "force": true for å tvinge overføring.' }, { status: 409 });
+        return Response.json(
+          {
+            error: 'Mål-kategori har allerede stemmer. Bruk "force": true for å tvinge overføring.',
+          },
+          { status: 409 }
+        );
       }
       if (targetVoteCount > 0 && force) {
-        await db.logAudit('manual_action', 'medium', `Forced transfer of nominee ${id} from ${existing.categoryId} to ${categoryId} by admin`);
+        await db.logAudit(
+          'manual_action',
+          'medium',
+          `Forced transfer of deltager ${id} from ${existing.categoryId} to ${categoryId} by admin`
+        );
       }
     }
 
@@ -82,12 +85,14 @@ export async function DELETE(
     const { id } = await params;
 
     const existing = await prisma.nominee.findUnique({ where: { id } });
-    if (!existing) return Response.json({ error: 'Nominee not found' }, { status: 404 });
+    if (!existing) return Response.json({ error: 'Deltager not found' }, { status: 404 });
 
     const voteCount = await prisma.vote.count({ where: { nomineeId: id } });
     if (voteCount > 0) {
       return Response.json(
-        { error: `Cannot delete "${existing.name}" — they have ${voteCount} vote${voteCount === 1 ? '' : 's'}. Withdraw them instead.` },
+        {
+          error: `Cannot delete "${existing.name}" — they have ${voteCount} vote${voteCount === 1 ? '' : 's'}. Withdraw them instead.`,
+        },
         { status: 409 }
       );
     }

@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
           </Link>
           <p className="text-gray-400 text-sm md:text-base leading-loose max-w-md">
             En møteplass for ledere, HR-ansvarlige, gründere og kommunikasjonsfolk som vil utfordre
-            vanetenkning, bygge broer og skape reell endring i arbeidslivet – og i samfunnet.
+            vanetenkning, bygge broer og skape reell endring i arbeidslivet og i samfunnet.
           </p>
         </div>
         <div>
@@ -53,22 +53,12 @@ const Footer: React.FC = () => {
           </p>
           <div className="flex gap-4 md:gap-6 mt-6 md:mt-8">
             <a
-              href="#"
+              href="https://www.linkedin.com/company/unity-summit"
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-unity-orange transition-colors text-base md:text-lg font-bold"
             >
               in
-            </a>
-            <a
-              href="#"
-              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-unity-orange transition-colors text-base md:text-lg font-bold"
-            >
-              fb
-            </a>
-            <a
-              href="#"
-              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-unity-orange transition-colors text-base md:text-lg font-bold"
-            >
-              ig
             </a>
           </div>
         </div>
@@ -76,13 +66,28 @@ const Footer: React.FC = () => {
       <div className="max-w-[90rem] mx-auto px-4 md:px-6 mt-6 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between text-gray-500 text-xs md:text-sm">
         <p>© 2026 Unity Summit. Alle rettigheter reservert.</p>
         <div className="flex gap-6 md:gap-8 mt-4 md:mt-0">
-          <a href="#" className="hover:text-white">
+          <a
+            href="https://unitysummit.no/brukerhandbok"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white"
+          >
             Brukerhåndbok
           </a>
-          <a href="#" className="hover:text-white">
+          <a
+            href="https://unitysummit.no/vilkar-og-betingelser"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white"
+          >
             Vilkår og betingelser
           </a>
-          <a href="#" className="hover:text-white">
+          <a
+            href="https://unitysummit.no/personvernerklaering"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white"
+          >
             Personvernerklæring
           </a>
         </div>

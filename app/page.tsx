@@ -1,5 +1,11 @@
+import { Suspense } from 'react';
+
 import VoteApp from '@/components/VoteApp';
 
 export default function HomePage() {
-  return <VoteApp />;
+  return (
+    <Suspense>
+      <VoteApp />
+    </Suspense>
+  );
 }

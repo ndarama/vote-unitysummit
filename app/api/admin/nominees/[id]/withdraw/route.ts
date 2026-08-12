@@ -3,10 +3,7 @@ import { requireRole } from '@/lib/require-role';
 import { prisma } from '@/lib/prisma';
 
 // POST /api/admin/nominees/[id]/withdraw — withdraw a nominee with a note
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const role = await requireRole(['admin', 'manager']);
     if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -20,7 +17,7 @@ export async function POST(
     }
 
     const existing = await prisma.nominee.findUnique({ where: { id } });
-    if (!existing) return Response.json({ error: 'Nominee not found' }, { status: 404 });
+    if (!existing) return Response.json({ error: 'Deltager not found' }, { status: 404 });
 
     const nominee = await prisma.nominee.update({
       where: { id },
@@ -45,7 +42,7 @@ export async function DELETE(
     const { id } = await params;
 
     const existing = await prisma.nominee.findUnique({ where: { id } });
-    if (!existing) return Response.json({ error: 'Nominee not found' }, { status: 404 });
+    if (!existing) return Response.json({ error: 'Deltager not found' }, { status: 404 });
 
     const nominee = await prisma.nominee.update({
       where: { id },

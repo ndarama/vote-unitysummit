@@ -17,12 +17,12 @@ export async function GET(
     });
 
     if (!nominee) {
-      return Response.json({ error: 'Nominee not found' }, { status: 404 });
+      return Response.json({ error: 'Deltager not found' }, { status: 404 });
     }
 
     // Get all nominees in the same category with their vote counts
     const categoryNominees = await prisma.nominee.findMany({
-      where: { 
+      where: {
         categoryId: nominee.categoryId,
         withdrawn: false,
       },
@@ -34,7 +34,7 @@ export async function GET(
     });
 
     // Calculate stats
-    const nomineesWithVotes = categoryNominees.map(n => ({
+    const nomineesWithVotes = categoryNominees.map((n) => ({
       id: n.id,
       votes: n.votes.length,
     }));
@@ -43,8 +43,8 @@ export async function GET(
     nomineesWithVotes.sort((a, b) => b.votes - a.votes);
 
     // Find current nominee's rank
-    const rank = nomineesWithVotes.findIndex(n => n.id === nomineeId) + 1;
-    const currentNomineeVotes = nomineesWithVotes.find(n => n.id === nomineeId)?.votes || 0;
+    const rank = nomineesWithVotes.findIndex((n) => n.id === nomineeId) + 1;
+    const currentNomineeVotes = nomineesWithVotes.find((n) => n.id === nomineeId)?.votes || 0;
     const totalVotes = nomineesWithVotes.reduce((sum, n) => sum + n.votes, 0);
     const percentage = totalVotes > 0 ? Math.round((currentNomineeVotes / totalVotes) * 100) : 0;
 

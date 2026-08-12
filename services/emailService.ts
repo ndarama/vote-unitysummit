@@ -9,24 +9,24 @@ function getSmtpTransporter() {
   const secure = process.env.SMTP_SECURE === 'true';
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASSWORD;
-  
+
   console.log('[SMTP Config] Creating transporter with:');
   console.log(`  Host: ${host}`);
   console.log(`  Port: ${port}`);
   console.log(`  Secure: ${secure}`);
   console.log(`  User: ${user}`);
   console.log(`  Password: ${pass ? '***SET***' : 'NOT SET'}`);
-  
+
   if (!host || !user || !pass) {
     console.error('[SMTP Config] Missing required SMTP configuration');
     return null;
   }
-  
-  return nodemailer.createTransport({ 
-    host, 
-    port, 
-    secure, 
-    auth: { user, pass } 
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
   });
 }
 
@@ -37,14 +37,14 @@ async function sendEmail(to: string, subject: string, html: string) {
   console.log(`[Email] Attempting to send email to ${to}`);
   console.log(`[Email] Subject: ${subject}`);
   console.log('[Email] Using SMTP provider');
-  
+
   const transporter = getSmtpTransporter();
   if (!transporter) {
     console.error('[Email] No email provider configured - check environment variables');
     console.error('[Email] Required variables: SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
     return false;
   }
-  
+
   try {
     console.log('[SMTP] Transporter configured, sending email...');
     const info = await transporter.sendMail({
@@ -246,7 +246,7 @@ export async function sendVoteConfirmationEmail(
  */
 function voterInvitationEmailHtml(name: string) {
   const votingUrl = process.env.AUTH_URL || 'http://localhost:3000';
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -344,7 +344,7 @@ export async function sendVoterInvitationEmail(email: string, name: string) {
 function adminInvitationEmailHtml(name: string, username: string, password: string, role: string) {
   const loginUrl = process.env.AUTH_URL || 'http://localhost:3000';
   const roleText = role === 'admin' ? 'Administrator' : 'Manager';
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -384,16 +384,20 @@ function adminInvitationEmailHtml(name: string, username: string, password: stri
           <div style="background-color:#f0f9ff;border:1px solid #7dd3fc;border-radius:8px;padding:20px;margin:0 0 24px 0">
             <p style="margin:0 0 12px 0;color:#001f2b;font-weight:600;font-size:15px">📋 Som ${roleText} kan du:</p>
             <ul style="margin:0;padding-left:20px;color:#334155;font-size:14px;line-height:1.8">
-              ${role === 'admin' ? `
-              <li>Administrere kategorier og Semifinalister</li>
+              ${
+                role === 'admin'
+                  ? `
+              <li>Administrere kategorier og deltakere</li>
               <li>Overvåke stemmegivning i sanntid</li>
               <li>Behandle stemmeintegritet</li>
               <li>Administrere brukere</li>
               <li>Se rapporter og statistikk</li>
-              ` : `
+              `
+                  : `
               <li>Overvåke stemmegivning</li>
               <li>Se rapporter og statistikk</li>
-              `}
+              `
+              }
             </ul>
           </div>
 

@@ -4,10 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { db } from '@/server/db';
 import { normalizeImageUrl, withNormalizedImageUrl } from '@/lib/image-url';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const role = await requireRole(['admin', 'manager']);
     if (!role) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -19,7 +16,7 @@ export async function POST(
     if (!categoryId) return Response.json({ error: 'Missing target categoryId' }, { status: 400 });
 
     const existing = await prisma.nominee.findUnique({ where: { id } });
-    if (!existing) return Response.json({ error: 'Nominee not found' }, { status: 404 });
+    if (!existing) return Response.json({ error: 'Deltager not found' }, { status: 404 });
 
     const created = await prisma.nominee.create({
       data: {
@@ -35,7 +32,11 @@ export async function POST(
       include: { category: { select: { id: true, title: true } } },
     });
 
-    await db.logAudit('manual_action', 'low', `Cloned nominee ${existing.id} to new nominee ${created.id} in category ${categoryId} by admin`);
+    await db.logAudit(
+      'manual_action',
+      'low',
+      `Cloned deltager ${existing.id} to new deltager ${created.id} in category ${categoryId} by admin`
+    );
 
     return Response.json(withNormalizedImageUrl(created));
   } catch (err) {

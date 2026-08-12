@@ -24,15 +24,10 @@ export async function POST(request: NextRequest) {
 
     // Send test OTP email
     const testCode = '123456';
-    const testNomineeName = 'Test Nominee';
+    const testNomineeName = 'Test Deltager';
     const testCategoryTitle = 'Test Category';
 
-    const emailSent = await sendVoteOTPEmail(
-      email,
-      testCode,
-      testNomineeName,
-      testCategoryTitle
-    );
+    const emailSent = await sendVoteOTPEmail(email, testCode, testNomineeName, testCategoryTitle);
 
     if (emailSent) {
       console.log('[Test Email] Test email sent successfully');
@@ -44,16 +39,22 @@ export async function POST(request: NextRequest) {
       });
     } else {
       console.error('[Test Email] Failed to send test email');
-      return Response.json({
-        success: false,
-        error: 'Failed to send email. Check server logs for details.',
-      }, { status: 500 });
+      return Response.json(
+        {
+          success: false,
+          error: 'Failed to send email. Check server logs for details.',
+        },
+        { status: 500 }
+      );
     }
   } catch (error: any) {
     console.error('[Test Email] Error:', error);
-    return Response.json({
-      success: false,
-      error: error.message || 'An error occurred',
-    }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: error.message || 'An error occurred',
+      },
+      { status: 500 }
+    );
   }
 }

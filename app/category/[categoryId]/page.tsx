@@ -1,5 +1,11 @@
+import { Suspense } from 'react';
+
 import VoteApp from '@/components/VoteApp';
 
 export default function CategoryPage() {
-  return <VoteApp />;
+  return (
+    <Suspense>
+      <VoteApp />
+    </Suspense>
+  );
 }
